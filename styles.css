@@ -1053,3 +1053,62 @@ body[data-room="wish-pillar"] .background-layer > img#backgroundImage {
   width: auto;
   min-height: auto;
 }
+
+
+/* layout-weather v1: character no longer gets pushed up by speech text */
+.home-stage {
+  display: block !important;
+  position: relative !important;
+  overflow: visible !important;
+}
+.home-stage::before {
+  bottom: 92px !important;
+  z-index: 0;
+}
+.character {
+  position: absolute !important;
+  left: 50% !important;
+  bottom: -8px !important;
+  z-index: 1 !important;
+  max-height: min(74dvh, 660px) !important;
+  max-width: min(118%, 480px) !important;
+  transform: translateX(-50%) scale(var(--character-scale)) !important;
+  pointer-events: auto;
+}
+.speech-card {
+  position: absolute !important;
+  left: 2px !important;
+  right: 2px !important;
+  bottom: 0 !important;
+  z-index: 3 !important;
+  margin: 0 !important;
+}
+.speech-card::before {
+  display: none;
+}
+.weather-card {
+  cursor: pointer;
+}
+.weather-actions {
+  align-items: end;
+}
+.weather-actions button {
+  min-height: 42px;
+}
+@media (max-height: 760px) {
+  .character {
+    max-height: min(71dvh, 590px) !important;
+    bottom: -4px !important;
+    transform: translateX(-50%) scale(var(--character-scale)) !important;
+  }
+  .speech-card {
+    padding: 11px 13px 12px !important;
+  }
+  #speechText { line-height: 1.52; }
+}
+@media (max-width: 380px) {
+  .character { max-width: min(124%, 470px) !important; }
+}
+
+/* no-timer v1 */
+.feature-nav { grid-template-columns: repeat(5, 1fr); }

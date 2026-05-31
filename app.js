@@ -1,6 +1,6 @@
-const BUILD_VERSION = "github-lite-20260601-1";
-const SETTINGS_KEY = "infinityCare.githubLite.settings";
-const DB_NAME = "infinity-care-db-functions-v2";
+const BUILD_VERSION = "layout-weather-20260601-1";
+const SETTINGS_KEY = "infinityCare.noTimer.settings";
+const DB_NAME = "infinity-care-db-layout-weather-v1";
 
 const characters = {
   haruka: {
@@ -153,7 +153,7 @@ const backgrounds = {
 
 const defaultSettings = {
   characterId: "haruka", backgroundId: "sharehouse", theme: "lavender", characterScale: 100,
-  weather: "", temperature: "", rain: "", weatherMemo: "",
+  weather: "", temperature: "", rain: "", weatherMemo: "", weatherCity: "所沢市", weatherCode: null, weatherUpdatedAt: "", weatherLocationName: "",
   reminderText: "悠：南帆、今日の記録、僕に預けて。\n朱音：姫、ログ入れとけ。面倒なら一言でいい。\n真澄：今日の君、空白にしないで。俺に残して。\n阿泫：南帆小姐，今日有冇記錄呀？ 少少都得。",
   songs: {
     haruka: { title: "静脈に棲む夜", url: "" },
@@ -229,12 +229,96 @@ function setBackgroundImage(bg){
 function preloadBackgrounds(){ Object.values(backgrounds).forEach(bg => { const im = new Image(); im.src = assetUrl(bg.image); }); }
 function applyTheme(){ document.body.classList.remove("theme-blood","theme-snow","theme-night"); if(settings.theme !== "lavender") document.body.classList.add(`theme-${settings.theme}`); }
 function applyCharacterScale(){ document.documentElement.style.setProperty("--character-scale", String(settings.characterScale / 100)); }
+function weatherCodeText(code){
+  const c = Number(code);
+  if([0].includes(c)) return "快晴";
+  if([1,2].includes(c)) return "晴れ時々くもり";
+  if([3].includes(c)) return "くもり";
+  if([45,48].includes(c)) return "霧";
+  if([51,53,55,56,57].includes(c)) return "霧雨";
+  if([61,63,65,66,67,80,81,82].includes(c)) return "雨";
+  if([71,73,75,77,85,86].includes(c)) return "雪";
+  if([95,96,99].includes(c)) return "雷雨";
+  return "天気";
+}
+function weatherCodeIcon(code, fallbackText=""){
+  const c = Number(code);
+  if([0,1].includes(c)) return "☀︎";
+  if([2,3,45,48].includes(c)) return "☁︎";
+  if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(c)) return "☔︎";
+  if([71,73,75,77,85,86].includes(c)) return "❄︎";
+  if([95,96,99].includes(c)) return "⚡︎";
+  const w = fallbackText || "";
+  return w.includes("雨") ? "☔︎" : w.includes("晴") ? "☀︎" : w.includes("雪") ? "❄︎" : "☁︎";
+}
+function formatWeatherUpdatedAt(value){
+  if(!value) return "";
+  const d = new Date(value);
+  if(Number.isNaN(d.getTime())) return "";
+  return new Intl.DateTimeFormat("ja-JP", { hour:"2-digit", minute:"2-digit" }).format(d);
+}
 function renderWeather(){
   const parts = [settings.weather, settings.temperature, settings.rain ? `降水 ${settings.rain}` : ""].filter(Boolean);
   $("#weatherSummary").textContent = parts.length ? parts.join(" / ") : "天気メモ未設定";
-  $("#weatherNote").textContent = settings.weatherMemo || "設定から今日の天気を入れられるよ";
-  const w = settings.weather || "";
-  $("#weatherIcon").textContent = w.includes("雨") ? "☔︎" : w.includes("晴") ? "☀︎" : w.includes("雪") ? "❄︎" : "☁︎";
+  const city = settings.weatherLocationName || settings.weatherCity || "";
+  const updated = formatWeatherUpdatedAt(settings.weatherUpdatedAt);
+  const baseNote = settings.weatherMemo || (settings.weatherCity ? `${settings.weatherCity}の天気を取得できるよ` : "設定から都市を入れられるよ");
+  $("#weatherNote").textContent = updated ? `${baseNote} / ${updated}更新` : baseNote;
+  $("#weatherIcon").textContent = weatherCodeIcon(settings.weatherCode, settings.weather);
+}
+async function updateWeatherFromCity(showMessage=true){
+  const city = (settings.weatherCity || "").trim();
+  if(!city){
+    if(showMessage) showToast("設定で都市名を入れてね");
+    return;
+  }
+  try{
+    if(showMessage) showToast(`${city}の天気を取りに行くね`);
+    const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=ja&format=json`;
+    const geoRes = await fetch(geoUrl);
+    if(!geoRes.ok) throw new Error("geocoding failed");
+    const geo = await geoRes.json();
+    const place = geo.results?.[0];
+    if(!place) throw new Error("location not found");
+    const lat = place.latitude;
+    const lon = place.longitude;
+    const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&current=temperature_2m,weather_code,is_day,precipitation&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1`;
+    const forecastRes = await fetch(forecastUrl);
+    if(!forecastRes.ok) throw new Error("forecast failed");
+    const data = await forecastRes.json();
+    const temp = data.current?.temperature_2m;
+    const code = data.current?.weather_code;
+    const rainProb = data.daily?.precipitation_probability_max?.[0];
+    const maxTemp = data.daily?.temperature_2m_max?.[0];
+    const minTemp = data.daily?.temperature_2m_min?.[0];
+    const placeName = [place.name, place.admin1].filter(Boolean).join(" / ");
+    settings.weatherCity = city;
+    settings.weatherLocationName = placeName || city;
+    settings.weatherCode = Number.isFinite(Number(code)) ? Number(code) : null;
+    settings.weather = weatherCodeText(code);
+    settings.temperature = Number.isFinite(Number(temp)) ? `${Math.round(Number(temp))}℃` : "";
+    settings.rain = Number.isFinite(Number(rainProb)) ? `${Math.round(Number(rainProb))}%` : "";
+    const hiLo = [Number.isFinite(Number(maxTemp)) ? `最高${Math.round(Number(maxTemp))}℃` : "", Number.isFinite(Number(minTemp)) ? `最低${Math.round(Number(minTemp))}℃` : ""].filter(Boolean).join(" / ");
+    settings.weatherMemo = `${placeName || city}${hiLo ? ` / ${hiLo}` : ""}`;
+    settings.weatherUpdatedAt = new Date().toISOString();
+    saveSettings();
+    renderWeather();
+    loadSettingsForm();
+    if(showMessage){
+      setSpeech(`${placeName || city}の天気、取ってきたよ。${settings.weather}${settings.temperature ? `、今は${settings.temperature}` : ""}。`);
+      showToast("天気を更新したよ");
+    }
+  }catch(e){
+    console.error(e);
+    if(showMessage) showToast("天気を取れなかったかも。都市名を変えてみて");
+  }
+}
+function maybeRefreshWeather(){
+  if(!settings.weatherCity) return;
+  const last = settings.weatherUpdatedAt ? new Date(settings.weatherUpdatedAt).getTime() : 0;
+  if(!last || Date.now() - last > 1000 * 60 * 60){
+    updateWeatherFromCity(false);
+  }
 }
 function renderHome(extraLine = ""){
   const chara = currentCharacter(); const bg = currentBackground();
@@ -276,7 +360,6 @@ function openPanel(id){
   if(id === "moodPanel") { loadTodayMood(); renderMoodMiniList(); updateSupportPrompt(); }
   if(id === "schedulePanel") renderSchedules();
   if(id === "diaryPanel") { loadTodayDiary(); renderDiaries(); }
-  if(id === "timerPanel") { updateTimerDisplay(); updateTimerSong(); }
   if(id === "settingsPanel") { renderPickers(); loadSettingsForm(); renderHome(characterLine(currentCharacter(), "settings")); }
   panel.classList.add("active"); panel.setAttribute("aria-hidden", "false");
 }
@@ -383,8 +466,33 @@ function renderPickers(){
   const cp=$("#characterPicker"); if(cp){ cp.innerHTML=""; Object.values(characters).forEach(ch=>{ const b=document.createElement("button"); b.className=`picker-card ${settings.characterId===ch.id?"selected":""}`; b.style.backgroundImage=`linear-gradient(135deg, rgba(0,0,0,.52), rgba(0,0,0,.10)), url("${assetUrl(ch.image)}")`; b.innerHTML=`<span>${ch.name}</span><small>${ch.title}</small>`; b.onclick=()=>{ settings.characterId=ch.id; saveSettings(); renderHome(); renderPickers(); showToast(`${ch.name}に切り替えたよ`); }; cp.appendChild(b); }); }
   const bp=$("#backgroundPicker"); if(bp){ bp.innerHTML=""; Object.values(backgrounds).forEach(bg=>{ const b=document.createElement("button"); b.className=`picker-card room-card ${settings.backgroundId===bg.id?"selected":""}`; b.style.backgroundImage=`linear-gradient(135deg, rgba(0,0,0,.46), rgba(0,0,0,.16)), url("${assetUrl(bg.image)}")`; b.innerHTML=`<span>${bg.name}</span><small>${bg.id}</small>`; b.onclick=()=>{ settings.backgroundId=bg.id; saveSettings(); renderHome(`${bg.name}に移動したよ。`); renderPickers(); showToast(`${bg.name}に切り替えたよ`); }; bp.appendChild(b); }); }
 }
-function loadSettingsForm(){ const f=$("#settingsForm"); f.theme.value=settings.theme; f.characterScale.value=settings.characterScale; $("#scaleValue").textContent=`${settings.characterScale}%`; f.weather.value=settings.weather; f.temperature.value=settings.temperature; f.rain.value=settings.rain; f.weatherMemo.value=settings.weatherMemo; f.reminderText.value=settings.reminderText; ["haruka","akane","masumi","hin"].forEach(id=>{ f[`songTitle_${id}`].value=settings.songs?.[id]?.title || ""; f[`songUrl_${id}`].value=settings.songs?.[id]?.url || ""; }); }
-function saveSettingsForm(event){ event.preventDefault(); const f=event.currentTarget; settings.theme=f.theme.value; settings.characterScale=Number(f.characterScale.value); settings.weather=f.weather.value.trim(); settings.temperature=f.temperature.value.trim(); settings.rain=f.rain.value.trim(); settings.weatherMemo=f.weatherMemo.value.trim(); settings.reminderText=f.reminderText.value; settings.songs={...settings.songs}; ["haruka","akane","masumi","hin"].forEach(id=>{ settings.songs[id]={ title:f[`songTitle_${id}`].value.trim(), url:f[`songUrl_${id}`].value.trim() }; }); saveSettings(); renderHome(); updateTimerSong(); showToast("設定を保存したよ"); }
+function loadSettingsForm(){
+  const f=$("#settingsForm");
+  f.theme.value=settings.theme;
+  f.characterScale.value=settings.characterScale;
+  $("#scaleValue").textContent=`${settings.characterScale}%`;
+  if(f.weatherCity) f.weatherCity.value=settings.weatherCity || "";
+  f.weather.value=settings.weather;
+  f.temperature.value=settings.temperature;
+  f.rain.value=settings.rain;
+  f.weatherMemo.value=settings.weatherMemo;
+  f.reminderText.value=settings.reminderText;
+}
+function saveSettingsForm(event){
+  event.preventDefault();
+  const f=event.currentTarget;
+  settings.theme=f.theme.value;
+  settings.characterScale=Number(f.characterScale.value);
+  settings.weatherCity=(f.weatherCity?.value || "").trim();
+  settings.weather=f.weather.value.trim();
+  settings.temperature=f.temperature.value.trim();
+  settings.rain=f.rain.value.trim();
+  settings.weatherMemo=f.weatherMemo.value.trim();
+  settings.reminderText=f.reminderText.value;
+  saveSettings();
+  renderHome();
+  showToast("設定を保存したよ");
+}
 
 async function exportData(){ const payload={ exportedAt:new Date().toISOString(), settings, healthLogs:await idbGetAll("healthLogs"), moodLogs:await idbGetAll("moodLogs"), schedules:await idbGetAll("schedules"), diaries:await idbGetAll("diaries") }; const blob=new Blob([JSON.stringify(payload,null,2)], {type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`infinity-care-backup-${todayISO()}.json`; a.click(); URL.revokeObjectURL(url); }
 async function importData(event){ const file=event.target.files?.[0]; if(!file)return; try{ const p=JSON.parse(await file.text()); if(p.settings){ settings=mergeSettings(defaultSettings,p.settings); saveSettings(); } for(const [key,storeName] of [["healthLogs","healthLogs"],["moodLogs","moodLogs"],["schedules","schedules"],["diaries","diaries"]]){ if(Array.isArray(p[key])){ await idbClear(storeName); for(const item of p[key]) await idbPut(storeName,item); } } renderHome(); renderPickers(); loadSettingsForm(); showToast("バックアップを読み込んだよ"); }catch(e){ console.error(e); showToast("読み込みに失敗したかも"); } }
@@ -401,6 +509,8 @@ function bindEvents(){
   $("#scheduleForm").addEventListener("submit", saveSchedule);
   $("#diaryForm").addEventListener("submit", saveDiary);
   $("#settingsForm").addEventListener("submit", saveSettingsForm);
+  $("#fetchWeather")?.addEventListener("click", ()=>updateWeatherFromCity(true));
+  $("#weatherCard")?.addEventListener("click", ()=>updateWeatherFromCity(true));
   $("#settingsForm").characterScale.addEventListener("input", e=>{ $("#scaleValue").textContent=`${e.target.value}%`; settings.characterScale=Number(e.target.value); applyCharacterScale(); });
   $("#exportData").addEventListener("click", exportData); $("#importData").addEventListener("change", importData);
   $$("input[type='range']").forEach(i=>i.addEventListener("input",()=>syncRangeLabels(document)));
@@ -408,12 +518,7 @@ function bindEvents(){
   $("#copySupportPrompt").addEventListener("click", copySupportPrompt);
   $("#openChatGPT").addEventListener("click", async()=>{ await copySupportPrompt(); window.open("https://chatgpt.com/", "_blank", "noopener"); });
   $("#scheduleForm").date.value=todayISO(); $("#healthForm").date.value=todayISO(); $("#moodForm").date.value=todayISO(); $("#diaryForm").date.value=todayISO();
-  $$(".timer-presets button").forEach(b=>b.addEventListener("click",()=>{ $("#timerForm").minutes.value=b.dataset.min; resetTimer(); }));
-  $("#timerForm").addEventListener("input",()=>{ if(!timer.running) resetTimer(); updateTimerSong(); });
-  $("#startTimer").addEventListener("click", startTimer); $("#pauseTimer").addEventListener("click", pauseTimer); $("#resetTimer").addEventListener("click", resetTimer); $("#openSong").addEventListener("click", openSong);
-  $$(`[data-song-preset]`).forEach(sel => sel.addEventListener("change", e => applySongPreset(e.target.dataset.songPreset, e.target.value)));
-  $("#songPlayer")?.addEventListener("ended", () => showToast("BGMが終わったよ"));
 }
 
-async function init(){ await clearPrototypeCaches(); db=await openDB(); bindEvents(); preloadBackgrounds(); renderHome(); renderPickers(); loadSettingsForm(); syncRangeLabels(document); resetTimer(); await renderSchedules(); }
+async function init(){ await clearPrototypeCaches(); db=await openDB(); bindEvents(); preloadBackgrounds(); renderHome(); renderPickers(); loadSettingsForm(); syncRangeLabels(document); await renderSchedules(); maybeRefreshWeather(); }
 init().catch(e=>{ console.error(e); showToast("初期化に失敗したかも"); });

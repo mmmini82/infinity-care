@@ -1,10 +1,10 @@
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
-$Port = 5200
+$Port = 5204
 $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Parse("127.0.0.1"), $Port)
 $listener.Start()
 $url = "http://localhost:$Port/"
-Write-Host "∞Care local server is running (github lite):" -ForegroundColor Green
+Write-Host "∞Care local server is running (no timer):" -ForegroundColor Green
 Write-Host "  $url" -ForegroundColor Cyan
 Write-Host "Close this window or press Ctrl+C to stop."
 Start-Process $url

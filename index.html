@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#171226" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="∞Care" />
+  <title>∞Care prototype - github lite</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="assets/icon-192.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <div id="backgroundLayer" class="background-layer"><img id="backgroundImage" alt="現在の場所背景" /></div>
+    <div class="veil"></div>
+
+    <header class="top-bar">
+      <div>
+        <p class="eyebrow">Minaho Life Companion</p>
+        <h1 id="todayLabel">今日</h1>
+      </div>
+      <button id="openSettings" class="icon-button" aria-label="設定">⚙︎</button>
+    </header>
+
+    <section class="weather-card" id="weatherCard">
+      <span id="weatherIcon">☁︎</span>
+      <div>
+        <strong id="weatherSummary">天気メモ未設定</strong>
+        <small id="weatherNote">設定から今日の天気を入れられるよ</small>
+      </div>
+    </section>
+
+    <main class="home-stage">
+      <img id="characterImage" class="character" src="assets/characters/haruka.png" alt="キャラ立ち絵" />
+      <div class="speech-card" role="button" tabindex="0" aria-label="セリフを変える">
+        <div class="speaker-row">
+          <span id="speakerName">悠</span>
+          <span id="roomName">シェアハウス</span>
+        </div>
+        <p id="speechText">南帆、今日のこと、少しだけ僕に預けて。</p>
+      </div>
+    </main>
+
+    <nav class="bottom-nav feature-nav" aria-label="メインメニュー">
+      <button data-panel="healthPanel">体調</button>
+      <button data-panel="moodPanel">気分</button>
+      <button data-panel="schedulePanel">予定</button>
+      <button data-panel="diaryPanel">日記</button>
+      <button data-panel="timerPanel">集中</button>
+      <button data-panel="settingsPanel">設定</button>
+    </nav>
+  </div>
+
+  <div id="healthPanel" class="panel" aria-hidden="true">
+    <div class="panel-card feature-panel-card">
+      <div class="panel-header">
+        <h2>体調</h2>
+        <button class="close-panel">×</button>
+      </div>
+      <form id="healthForm" class="form-grid card-form">
+        <label>日付<input type="date" name="date" required /></label>
+        <label>睡眠<input type="number" name="sleepHours" min="0" max="24" step="0.5" placeholder="5.5" /></label>
+        <label>体温<input type="number" name="temperature" min="32" max="42" step="0.1" placeholder="35.8" /></label>
+        <label>薬
+          <select name="medicine">
+            <option value="未入力">未入力</option><option value="飲んだ">飲んだ</option><option value="飲んでない">飲んでない</option><option value="不要">不要</option>
+          </select>
+        </label>
+        <label>食欲
+          <select name="appetite">
+            <option value="普通">普通</option><option value="ない">ない</option><option value="ある">ある</option><option value="よくわからない">よくわからない</option>
+          </select>
+        </label>
+        <label>生理
+          <select name="period">
+            <option value="なし">なし</option><option value="あり">あり</option><option value="予定前っぽい">予定前っぽい</option><option value="終わりかけ">終わりかけ</option>
+          </select>
+        </label>
+        <label>頭痛 <span class="range-value" data-for="headache">0</span><input type="range" name="headache" min="0" max="5" value="0" /></label>
+        <label>腹痛 <span class="range-value" data-for="stomachache">0</span><input type="range" name="stomachache" min="0" max="5" value="0" /></label>
+        <label>生理痛 <span class="range-value" data-for="periodPain">0</span><input type="range" name="periodPain" min="0" max="5" value="0" /></label>
+        <label>だるさ <span class="range-value" data-for="fatigue">0</span><input type="range" name="fatigue" min="0" max="5" value="0" /></label>
+        <fieldset class="check-group pill-checks">
+          <legend>症状</legend>
+          <label><input type="checkbox" name="symptoms" value="寒い" />寒い</label>
+          <label><input type="checkbox" name="symptoms" value="暑い" />暑い</label>
+          <label><input type="checkbox" name="symptoms" value="めまい" />めまい</label>
+          <label><input type="checkbox" name="symptoms" value="貧血っぽい" />貧血っぽい</label>
+          <label><input type="checkbox" name="symptoms" value="吐き気" />吐き気</label>
+          <label><input type="checkbox" name="symptoms" value="喉" />喉</label>
+          <label><input type="checkbox" name="symptoms" value="咳" />咳</label>
+          <label><input type="checkbox" name="symptoms" value="眠い" />眠い</label>
+        </fieldset>
+        <label class="full">体調メモ<textarea name="memo" rows="2" placeholder="今日の体のこと、少しだけ"></textarea></label>
+        <button class="primary" type="submit">体調を保存</button>
+      </form>
+      <div class="mini-list-block"><h3>最近の体調</h3><div id="healthMiniList" class="list compact-list"></div></div>
+    </div>
+  </div>
+
+  <div id="moodPanel" class="panel" aria-hidden="true">
+    <div class="panel-card feature-panel-card">
+      <div class="panel-header">
+        <h2>気分・しんどい</h2>
+        <button class="close-panel">×</button>
+      </div>
+      <form id="moodForm" class="form-grid card-form">
+        <label>日付<input type="date" name="date" required /></label>
+        <label>気分
+          <select name="moodLabel">
+            <option value="ふつう">ふつう</option><option value="よい">よい</option><option value="しょんぼり">しょんぼり</option><option value="イライラ">イライラ</option><option value="不安">不安</option><option value="泣きそう">泣きそう</option><option value="無">無</option>
+          </select>
+        </label>
+        <label>気力 <span class="range-value" data-for="energy">3</span><input type="range" name="energy" min="1" max="5" value="3" /></label>
+        <label>不安 <span class="range-value" data-for="anxiety">0</span><input type="range" name="anxiety" min="0" max="5" value="0" /></label>
+        <fieldset class="check-group mood-chips">
+          <legend>いま近いやつ</legend>
+          <label><input type="checkbox" name="moodTags" value="ガチしんどい" />ガチしんどい</label>
+          <label><input type="checkbox" name="moodTags" value="頭が回らない" />頭が回らない</label>
+          <label><input type="checkbox" name="moodTags" value="甘やかして" />甘やかして</label>
+          <label><input type="checkbox" name="moodTags" value="不安" />不安</label>
+          <label><input type="checkbox" name="moodTags" value="泣きそう" />泣きそう</label>
+          <label><input type="checkbox" name="moodTags" value="動けない" />動けない</label>
+          <label><input type="checkbox" name="moodTags" value="褒めて" />褒めて</label>
+          <label><input type="checkbox" name="moodTags" value="病院で言うことまとめたい" />病院メモ</label>
+        </fieldset>
+        <label class="full">気分メモ<textarea name="memo" rows="2" placeholder="言える範囲だけでいい"></textarea></label>
+        <button class="primary" type="submit">気分を保存</button>
+      </form>
+      <section class="support-preview">
+        <div class="panel-subheader"><h3>ChatGPTに持っていく文章</h3><button id="makeMoodPrompt" type="button">作る</button></div>
+        <textarea id="supportPrompt" rows="4" readonly></textarea>
+        <div class="button-row"><button id="copySupportPrompt" class="primary" type="button">コピーする</button><button id="openChatGPT" type="button">はるくんのところへ行く</button></div>
+      </section>
+      <div class="mini-list-block"><h3>最近の気分</h3><div id="moodMiniList" class="list compact-list"></div></div>
+    </div>
+  </div>
+
+  <div id="schedulePanel" class="panel" aria-hidden="true">
+    <div class="panel-card feature-panel-card">
+      <div class="panel-header"><h2>予定</h2><button class="close-panel">×</button></div>
+      <form id="scheduleForm" class="form-grid card-form">
+        <label>日付<input type="date" name="date" required /></label>
+        <label>時間<input type="time" name="time" /></label>
+        <label>カテゴリ<select name="category"><option>仕事</option><option>病院</option><option>遊び</option><option>締切</option><option>通院</option><option>薬</option><option>生理予定</option><option>買い物</option><option>その他</option></select></label>
+        <label class="full">予定名<input type="text" name="title" placeholder="病院、締切、買い物など" required /></label>
+        <label class="full">メモ<textarea name="memo" rows="2"></textarea></label>
+        <button class="primary" type="submit">予定を保存</button>
+      </form>
+      <h3>近い予定</h3><div id="scheduleList" class="list"></div>
+    </div>
+  </div>
+
+  <div id="diaryPanel" class="panel" aria-hidden="true">
+    <div class="panel-card feature-panel-card">
+      <div class="panel-header"><h2>日記</h2><button class="close-panel">×</button></div>
+      <form id="diaryForm" class="form-grid card-form">
+        <label>日付<input type="date" name="date" required /></label>
+        <label>タグ<input type="text" name="tags" placeholder="仕事,病院,遊び" /></label>
+        <label class="full">タイトル<input type="text" name="title" placeholder="今日のタイトル" /></label>
+        <label class="full">本文<textarea name="body" rows="6" placeholder="今日あったこと。短くても空白よりえらい。"></textarea></label>
+        <button class="primary" type="submit">日記を保存</button>
+      </form>
+      <h3>最近の日記</h3><div id="diaryList" class="list"></div>
+    </div>
+  </div>
+
+  <div id="timerPanel" class="panel" aria-hidden="true">
+    <div class="panel-card feature-panel-card timer-card">
+      <div class="panel-header"><h2>作業タイマー</h2><button class="close-panel">×</button></div>
+      <div class="timer-face"><span id="timerTime">25:00</span><small id="timerStatus">待機中</small></div>
+      <div class="timer-presets"><button type="button" data-min="5">5分</button><button type="button" data-min="15">15分</button><button type="button" data-min="25">25分</button><button type="button" data-min="45">45分</button></div>
+      <form id="timerForm" class="form-grid card-form">
+        <label>時間（分）<input type="number" name="minutes" min="1" max="180" value="25" /></label>
+        <label>担当キャラ<select name="timerCharacter"><option value="current">今のキャラ</option><option value="haruka">悠</option><option value="akane">朱音</option><option value="masumi">真澄</option><option value="hin">阿泫</option></select></label>
+        <label class="full">作業名<input type="text" name="task" placeholder="何をやる？" /></label>
+        <label class="full inline-check"><input id="timerAutoBgm" type="checkbox" checked />開始したらBGMも流す</label>
+      </form>
+      <div class="song-card"><strong id="songTitle">キャラソン未設定</strong><small id="songNote">設定でキャラごとに曲を選べるよ</small><audio id="songPlayer" controls preload="none"></audio></div>
+      <div class="button-row"><button id="startTimer" class="primary" type="button">開始</button><button id="pauseTimer" type="button">一時停止</button><button id="resetTimer" type="button">リセット</button><button id="openSong" type="button">BGM再生/停止</button></div>
+    </div>
+  </div>
+
+  <div id="settingsPanel" class="panel" aria-hidden="true">
+    <div class="panel-card feature-panel-card settings-card">
+      <div class="panel-header"><h2>設定</h2><button class="close-panel">×</button></div>
+      <h3>キャラ</h3><div id="characterPicker" class="card-grid"></div>
+      <h3>部屋</h3><p id="roomDebug" class="room-debug">現在：シェアハウスリビング / sharehouse</p><div id="backgroundPicker" class="card-grid"></div>
+      <form id="settingsForm" class="form-grid card-form">
+        <label>テーマ<select name="theme"><option value="lavender">ラベンダー</option><option value="blood">深い赤</option><option value="snow">雪色</option><option value="night">夜</option></select></label>
+        <label>立ち絵サイズ <span id="scaleValue">100%</span><input type="range" name="characterScale" min="85" max="125" value="100" /></label>
+        <label>天気<input name="weather" placeholder="くもり" /></label>
+        <label>気温<input name="temperature" placeholder="18℃" /></label>
+        <label>降水確率<input name="rain" placeholder="40%" /></label>
+        <label class="full">天気メモ<input name="weatherMemo" placeholder="羽織るものあると楽かも" /></label>
+        <label class="full">23時通知文メモ<textarea name="reminderText" rows="2"></textarea></label>
+        <h3 class="full">キャラソン設定</h3>
+        <p class="full hint">アップロード済みの曲から選べるよ。タイトルとURL欄を直接書き換えれば外部URLも使える。</p>
+        <label class="full">悠 プリセット<select name="songPreset_haruka" data-song-preset="haruka"></select></label>
+        <label>悠 曲名<input name="songTitle_haruka" placeholder="Silent Red" /></label><label>悠 URL<input name="songUrl_haruka" placeholder="https://..." /></label>
+        <label class="full">朱音 プリセット<select name="songPreset_akane" data-song-preset="akane"></select></label>
+        <label>朱音 曲名<input name="songTitle_akane" placeholder="RED://Override" /></label><label>朱音 URL<input name="songUrl_akane" placeholder="https://..." /></label>
+        <label class="full">真澄 プリセット<select name="songPreset_masumi" data-song-preset="masumi"></select></label>
+        <label>真澄 曲名<input name="songTitle_masumi" placeholder="Masquerade Waltz" /></label><label>真澄 URL<input name="songUrl_masumi" placeholder="https://..." /></label>
+        <label class="full">阿泫 プリセット<select name="songPreset_hin" data-song-preset="hin"></select></label>
+        <label>阿泫 曲名<input name="songTitle_hin" placeholder="Cantonese Tones" /></label><label>阿泫 URL<input name="songUrl_hin" placeholder="https://..." /></label>
+        <button class="primary" type="submit">設定を保存</button>
+      </form>
+      <div class="button-row"><button id="exportData" type="button">JSON書き出し</button><label class="file-label">読み込み<input id="importData" type="file" accept="application/json" /></label></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js" type="module"></script>
+</body>
+</html>

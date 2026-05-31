@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b9a1ff"/><stop offset="1" stop-color="#ff93c8"/></linearGradient></defs>
+  <rect width="192" height="192" rx="44" fill="#171226"/>
+  <circle cx="96" cy="96" r="62" fill="url(#g)" opacity="0.28"/>
+  <text x="96" y="111" text-anchor="middle" font-family="serif" font-size="58" fill="#fff8ff">∞</text>
+  <text x="96" y="139" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#fff8ff">Care</text>
+</svg>

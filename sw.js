@@ -1,25 +1,28 @@
-const CACHE_NAME = "infinity-care-prototype-v6-location-fix2";
+const CACHE_NAME = "infinity-care-no-timer-icon-v1";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
   "./manifest.webmanifest",
-  "./assets/icon-192.svg",
-  "./assets/icon-512.svg",
-  "./assets/characters/haruka.svg",
-  "./assets/characters/akane.svg",
-  "./assets/characters/masumi.svg",
-  "./assets/characters/hin.svg",
-  "./assets/backgrounds/sharehouse-living.webp",
-  "./assets/backgrounds/haruka-room.webp",
-  "./assets/backgrounds/akane-room.webp",
-  "./assets/backgrounds/masumi-room.webp",
-  "./assets/backgrounds/hin-room.webp",
-  "./assets/backgrounds/minaho-room.webp",
-  "./assets/backgrounds/shiniki-wish-pillar.webp",
-  "./assets/backgrounds/sougetsukan-lobby.webp",
-  "./assets/backgrounds/hien-shrine.webp"
+  "./assets/app-icon-192.png",
+  "./assets/app-icon-512.png",
+  "./assets/app-icon-1024.png",
+  "./assets/apple-touch-icon.png",
+  "./assets/favicon-32.png",
+  "./assets/characters/haruka.png",
+  "./assets/characters/akane.png",
+  "./assets/characters/masumi.png",
+  "./assets/characters/hin.png",
+  "./assets/backgrounds/01-sharehouse-living.jpg",
+  "./assets/backgrounds/02-haruka-room.jpg",
+  "./assets/backgrounds/03-akane-room.jpg",
+  "./assets/backgrounds/04-masumi-room.jpg",
+  "./assets/backgrounds/05-hin-room.jpg",
+  "./assets/backgrounds/06-minaho-room.jpg",
+  "./assets/backgrounds/07-wish-pillar.jpg",
+  "./assets/backgrounds/08-sougetsukan-lobby.jpg",
+  "./assets/backgrounds/09-hien-shrine.jpg"
 ];
 
 self.addEventListener("install", (event) => {

@@ -1,4 +1,4 @@
-const BUILD_VERSION = "layout-weather-20260601-1";
+const BUILD_VERSION = "no-timer-icon-20260601-1";
 const SETTINGS_KEY = "infinityCare.noTimer.settings";
 const DB_NAME = "infinity-care-db-layout-weather-v1";
 

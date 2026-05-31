@@ -8,7 +8,7 @@
 <meta content="yes" name="apple-mobile-web-app-capable"/>
 <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="∞Care" name="apple-mobile-web-app-title"/>
-<title>∞Care prototype - no timer</title>
+<title>∞Care prototype - mood log</title>
 <link href="manifest.webmanifest" rel="manifest"/>
 <link href="assets/apple-touch-icon.png" rel="apple-touch-icon"/>
 <link href="assets/favicon-32.png" rel="icon" sizes="32x32" type="image/png"/>
@@ -21,17 +21,10 @@
 <header class="top-bar">
 <div>
 <p class="eyebrow">Minaho Life Companion</p>
-<h1 id="todayLabel">今日</h1>
+<h1 class="today-line"><span id="todayLabel">今日</span><span id="timeLabel">00:00</span></h1>
 </div>
 <button aria-label="設定" class="icon-button" id="openSettings">⚙︎</button>
 </header>
-<section class="weather-card" id="weatherCard">
-<span id="weatherIcon">☁︎</span>
-<div>
-<strong id="weatherSummary">天気メモ未設定</strong>
-<small id="weatherNote">設定から今日の天気を入れられるよ</small>
-</div>
-</section>
 <main class="home-stage">
 <img alt="キャラ立ち絵" class="character" id="characterImage" src="assets/characters/haruka.png"/>
 <div aria-label="セリフを変える" class="speech-card" role="button" tabindex="0">
@@ -47,7 +40,7 @@
 <button data-panel="moodPanel">気分</button>
 <button data-panel="schedulePanel">予定</button>
 <button data-panel="diaryPanel">日記</button>
-
+<button data-panel="logsPanel">ログ</button>
 <button data-panel="settingsPanel">設定</button>
 </nav>
 </div>
@@ -100,20 +93,20 @@
 <div aria-hidden="true" class="panel" id="moodPanel">
 <div class="panel-card feature-panel-card">
 <div class="panel-header">
-<h2>気分・しんどい</h2>
+<h2>気分・感情</h2>
 <button class="close-panel">×</button>
 </div>
 <form class="form-grid card-form" id="moodForm">
 <label>日付<input name="date" required="" type="date"/></label>
 <label>気分
           <select name="moodLabel">
-<option value="ふつう">ふつう</option><option value="よい">よい</option><option value="しょんぼり">しょんぼり</option><option value="イライラ">イライラ</option><option value="不安">不安</option><option value="泣きそう">泣きそう</option><option value="無">無</option>
+<option value="ふつう">ふつう</option><option value="楽しい">楽しい</option><option value="嬉しい">嬉しい</option><option value="安心">安心</option><option value="わくわく">わくわく</option><option value="満足">満足</option><option value="しょんぼり">しょんぼり</option><option value="イライラ">イライラ</option><option value="不安">不安</option><option value="泣きそう">泣きそう</option><option value="無">無</option><option value="混ざってる">混ざってる</option>
 </select>
 </label>
 <label>気力 <span class="range-value" data-for="energy">3</span><input max="5" min="1" name="energy" type="range" value="3"/></label>
 <label>不安 <span class="range-value" data-for="anxiety">0</span><input max="5" min="0" name="anxiety" type="range" value="0"/></label>
 <fieldset class="check-group mood-chips">
-<legend>いま近いやつ</legend>
+<legend>いま近いやつ（しんどい・楽しいどっちもOK）</legend>
 <label><input name="moodTags" type="checkbox" value="ガチしんどい"/>ガチしんどい</label>
 <label><input name="moodTags" type="checkbox" value="頭が回らない"/>頭が回らない</label>
 <label><input name="moodTags" type="checkbox" value="甘やかして"/>甘やかして</label>
@@ -122,7 +115,31 @@
 <label><input name="moodTags" type="checkbox" value="動けない"/>動けない</label>
 <label><input name="moodTags" type="checkbox" value="褒めて"/>褒めて</label>
 <label><input name="moodTags" type="checkbox" value="病院で言うことまとめたい"/>病院メモ</label>
+<label><input name="moodTags" type="checkbox" value="楽しい"/>楽しい</label>
+<label><input name="moodTags" type="checkbox" value="嬉しい"/>嬉しい</label>
+<label><input name="moodTags" type="checkbox" value="安心"/>安心</label>
+<label><input name="moodTags" type="checkbox" value="わくわく"/>わくわく</label>
+<label><input name="moodTags" type="checkbox" value="満足"/>満足</label>
 </fieldset>
+
+<fieldset class="check-group reason-chips">
+<legend>原因・きっかけ</legend>
+<label><input name="reasonTags" type="checkbox" value="仕事"/>仕事</label>
+<label><input name="reasonTags" type="checkbox" value="家族"/>家族</label>
+<label><input name="reasonTags" type="checkbox" value="旅行"/>旅行</label>
+<label><input name="reasonTags" type="checkbox" value="趣味"/>趣味</label>
+<label><input name="reasonTags" type="checkbox" value="GPT"/>GPT</label>
+<label><input name="reasonTags" type="checkbox" value="SNS"/>SNS</label>
+<label><input name="reasonTags" type="checkbox" value="友達"/>友達</label>
+<label><input name="reasonTags" type="checkbox" value="体調"/>体調</label>
+<label><input name="reasonTags" type="checkbox" value="天気"/>天気</label>
+<label><input name="reasonTags" type="checkbox" value="お金"/>お金</label>
+<label><input name="reasonTags" type="checkbox" value="予定"/>予定</label>
+<label><input name="reasonTags" type="checkbox" value="推し活"/>推し活</label>
+<label><input name="reasonTags" type="checkbox" value="恋愛"/>恋愛</label>
+<label><input name="reasonTags" type="checkbox" value="家事"/>家事</label>
+</fieldset>
+<label class="full">きっかけメモ<textarea name="reasonMemo" placeholder="なんでそう感じたか。楽しい理由でも、しんどい理由でもOK" rows="2"></textarea></label>
 <label class="full">気分メモ<textarea name="memo" placeholder="言える範囲だけでいい" rows="2"></textarea></label>
 <button class="primary" type="submit">気分を保存</button>
 </form>
@@ -162,6 +179,27 @@
 </div>
 </div>
 
+<div aria-hidden="true" class="panel" id="logsPanel">
+<div class="panel-card feature-panel-card logs-card">
+<div class="panel-header"><h2>ログ</h2><button class="close-panel">×</button></div>
+<p class="hint">最近14日分の気力・不安・体調ゲージをまとめて見る場所。</p>
+<section class="chart-card">
+<div class="panel-subheader"><h3>気分ログ</h3><small id="moodChartCount">0件</small></div>
+<div class="chart-wrap" id="moodChart"></div>
+<div class="legend-row"><span class="legend-dot energy"></span>気力 <span class="legend-dot anxiety"></span>不安</div>
+</section>
+<section class="chart-card">
+<div class="panel-subheader"><h3>体調ログ</h3><small id="healthChartCount">0件</small></div>
+<div class="chart-wrap" id="healthChart"></div>
+<div class="legend-row"><span class="legend-dot fatigue"></span>だるさ <span class="legend-dot headache"></span>頭痛 <span class="legend-dot stomach"></span>腹痛 <span class="legend-dot period"></span>生理痛</div>
+</section>
+<section class="chart-card">
+<div class="panel-subheader"><h3>原因・きっかけ</h3><small>気分ログから集計</small></div>
+<div class="reason-cloud" id="reasonSummary"></div>
+</section>
+</div>
+</div>
+
 <div aria-hidden="true" class="panel" id="settingsPanel">
 <div class="panel-card feature-panel-card settings-card">
 <div class="panel-header"><h2>設定</h2><button class="close-panel">×</button></div>
@@ -176,7 +214,6 @@
 <label>気温<input name="temperature" placeholder="18℃"/></label>
 <label>降水確率<input name="rain" placeholder="40%"/></label>
 <label class="full">天気メモ<input name="weatherMemo" placeholder="羽織るものあると楽かも"/></label>
-<label class="full">23時通知文メモ<textarea name="reminderText" rows="2"></textarea></label>
 
 
 

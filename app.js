@@ -1,5 +1,5 @@
-const BUILD_VERSION = "no-timer-icon-20260601-1";
-const SETTINGS_KEY = "infinityCare.noTimer.settings";
+const BUILD_VERSION = "mood-log-20260601-1";
+const SETTINGS_KEY = "infinityCare.moodLog.settings";
 const DB_NAME = "infinity-care-db-layout-weather-v1";
 
 const characters = {
@@ -154,7 +154,6 @@ const backgrounds = {
 const defaultSettings = {
   characterId: "haruka", backgroundId: "sharehouse", theme: "lavender", characterScale: 100,
   weather: "", temperature: "", rain: "", weatherMemo: "", weatherCity: "所沢市", weatherCode: null, weatherUpdatedAt: "", weatherLocationName: "",
-  reminderText: "悠：南帆、今日の記録、僕に預けて。\n朱音：姫、ログ入れとけ。面倒なら一言でいい。\n真澄：今日の君、空白にしないで。俺に残して。\n阿泫：南帆小姐，今日有冇記錄呀？ 少少都得。",
   songs: {
     haruka: { title: "静脈に棲む夜", url: "" },
     akane: { title: "紅蓮のエスコート", url: "" },
@@ -181,6 +180,8 @@ function saveSettings(){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(setti
 function assetUrl(path){ return `${path}?v=${BUILD_VERSION}`; }
 function todayISO(){ const now = new Date(); const tz = now.getTimezoneOffset()*60000; return new Date(now - tz).toISOString().slice(0,10); }
 function formatDateLabel(d = new Date()){ return new Intl.DateTimeFormat("ja-JP", { month:"long", day:"numeric", weekday:"short" }).format(d); }
+function formatTimeLabel(d = new Date()){ return new Intl.DateTimeFormat("ja-JP", { hour:"2-digit", minute:"2-digit" }).format(d); }
+function updateClock(){ const t=$("#timeLabel"); if(t) t.textContent = formatTimeLabel(); }
 function getTimeSlot(){ const h = new Date().getHours(); if(h>=5&&h<11)return "morning"; if(h>=11&&h<18)return "day"; if(h>=18&&h<23)return "evening"; if(h>=23)return "night"; return "late"; }
 function currentCharacter(){ return characters[settings.characterId] || characters.haruka; }
 function currentBackground(){ return backgrounds[settings.backgroundId] || backgrounds.sharehouse; }
@@ -258,13 +259,39 @@ function formatWeatherUpdatedAt(value){
   return new Intl.DateTimeFormat("ja-JP", { hour:"2-digit", minute:"2-digit" }).format(d);
 }
 function renderWeather(){
+  const summaryEl = $("#weatherSummary");
+  const noteEl = $("#weatherNote");
+  const iconEl = $("#weatherIcon");
+  if(!summaryEl || !noteEl || !iconEl) return;
   const parts = [settings.weather, settings.temperature, settings.rain ? `降水 ${settings.rain}` : ""].filter(Boolean);
-  $("#weatherSummary").textContent = parts.length ? parts.join(" / ") : "天気メモ未設定";
-  const city = settings.weatherLocationName || settings.weatherCity || "";
+  summaryEl.textContent = parts.length ? parts.join(" / ") : "天気メモ未設定";
   const updated = formatWeatherUpdatedAt(settings.weatherUpdatedAt);
   const baseNote = settings.weatherMemo || (settings.weatherCity ? `${settings.weatherCity}の天気を取得できるよ` : "設定から都市を入れられるよ");
-  $("#weatherNote").textContent = updated ? `${baseNote} / ${updated}更新` : baseNote;
-  $("#weatherIcon").textContent = weatherCodeIcon(settings.weatherCode, settings.weather);
+  noteEl.textContent = updated ? `${baseNote} / ${updated}更新` : baseNote;
+  iconEl.textContent = weatherCodeIcon(settings.weatherCode, settings.weather);
+}
+function weatherSpeechLine(){
+  const chara = currentCharacter();
+  const city = settings.weatherLocationName || settings.weatherCity || "ここ";
+  const weather = settings.weather || "天気未取得";
+  const temp = settings.temperature ? `、気温は${settings.temperature}` : "";
+  const rain = settings.rain ? `、降水確率は${settings.rain}` : "";
+  if(!settings.weather && !settings.temperature && !settings.rain){
+    const empty = {
+      haruka: `天気はまだ取れてないみたい。設定で都市を入れたら、僕がここで読んであげる。`,
+      akane: `天気まだ入ってねぇな。都市だけ入れときゃ、俺が見とく。`,
+      masumi: `天気はまだ空白だね。……でも、空白も埋められる。設定で都市を入れて。`,
+      hin: `天氣未拎到呀。設定入城市名，老師幫你睇。`
+    };
+    return empty[chara.id] || empty.haruka;
+  }
+  const lines = {
+    haruka: `${city}は${weather}${temp}${rain}。外に出るなら、今の君の体調も一緒に見てからにしよう。`,
+    akane: `${city}は${weather}${temp}${rain}。出るなら、暑さ寒さだけ見誤んなよ、姫。`,
+    masumi: `${city}は${weather}${temp}${rain}。今日の空模様も、君の記録に混ぜておこう。`,
+    hin: `${city}而家係${weather}${temp}${rain}。出門可以，但唔好同自己硬碰硬呀。`
+  };
+  return lines[chara.id] || lines.haruka;
 }
 async function updateWeatherFromCity(showMessage=true){
   const city = (settings.weatherCity || "").trim();
@@ -323,6 +350,7 @@ function maybeRefreshWeather(){
 function renderHome(extraLine = ""){
   const chara = currentCharacter(); const bg = currentBackground();
   $("#todayLabel").textContent = formatDateLabel();
+  updateClock();
   setBackgroundImage(bg); applyTheme(); applyCharacterScale(); renderWeather();
   $("#characterImage").src = assetUrl(chara.image);
   $("#speakerName").textContent = chara.name;
@@ -332,6 +360,7 @@ function renderHome(extraLine = ""){
   const roomDebug = $("#roomDebug"); if(roomDebug) roomDebug.textContent = `現在：${bg.name} / ${bg.id}`;
   updateTimerSong();
 }
+
 function showToast(message){ const t=$("#toast"); t.textContent=message; t.classList.add("show"); clearTimeout(showToast.timer); showToast.timer=setTimeout(()=>t.classList.remove("show"),2200); }
 
 async function openDB(){
@@ -360,6 +389,7 @@ function openPanel(id){
   if(id === "moodPanel") { loadTodayMood(); renderMoodMiniList(); updateSupportPrompt(); }
   if(id === "schedulePanel") renderSchedules();
   if(id === "diaryPanel") { loadTodayDiary(); renderDiaries(); }
+  if(id === "logsPanel") { renderLogsPanel(); }
   if(id === "settingsPanel") { renderPickers(); loadSettingsForm(); renderHome(characterLine(currentCharacter(), "settings")); }
   panel.classList.add("active"); panel.setAttribute("aria-hidden", "false");
 }
@@ -380,7 +410,7 @@ function collectHealth(){
   const f=$("#healthForm"); const data=new FormData(f);
   return { date:data.get("date"), updatedAt:new Date().toISOString(), sleepHours:data.get("sleepHours")?Number(data.get("sleepHours")):null, temperature:data.get("temperature")?Number(data.get("temperature")):null, appetite:data.get("appetite"), medicine:data.get("medicine"), period:data.get("period"), headache:Number(data.get("headache")), stomachache:Number(data.get("stomachache")), periodPain:Number(data.get("periodPain")), fatigue:Number(data.get("fatigue")), symptoms:data.getAll("symptoms"), memo:data.get("memo")||"" };
 }
-async function saveHealth(event){ event.preventDefault(); const log=collectHealth(); await idbPut("healthLogs", log); renderHome(characterLine(currentCharacter(), "savedHealth")); await renderHealthMiniList(); showToast("体調を保存したよ"); }
+async function saveHealth(event){ event.preventDefault(); const log=collectHealth(); await idbPut("healthLogs", log); renderHome(characterLine(currentCharacter(), "savedHealth")); await renderHealthMiniList(); if($("#logsPanel")?.classList.contains("active")) await renderLogsPanel(); showToast("体調を保存したよ"); }
 function healthSummary(log){ const a=[]; if(log.sleepHours!=null)a.push(`睡眠${log.sleepHours}h`); if(log.temperature!=null)a.push(`${log.temperature}℃`); if(log.headache)a.push(`頭痛${log.headache}`); if(log.stomachache)a.push(`腹痛${log.stomachache}`); if(log.periodPain)a.push(`生理痛${log.periodPain}`); if(log.fatigue)a.push(`だるさ${log.fatigue}`); if(log.symptoms?.length)a.push(log.symptoms.join("・")); if(log.memo)a.push(`メモ:${log.memo}`); return a.join(" / ") || "記録あり"; }
 async function renderHealthMiniList(){ const list=$("#healthMiniList"); if(!list)return; const logs=(await idbGetAll("healthLogs")).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4); list.innerHTML = logs.length ? logs.map(l=>`<article class="log-item"><time>${l.date}</time><p>${escapeHTML(healthSummary(l))}</p></article>`).join("") : `<p class="hint">まだ体調ログがないよ。</p>`; }
 
@@ -388,17 +418,32 @@ async function loadTodayMood(){
   const form=$("#moodForm"); form.date.value=todayISO();
   const log=await idbGet("moodLogs", form.date.value);
   if(!log){ form.reset(); form.date.value=todayISO(); syncRangeLabels(form); updateSupportPrompt(); return; }
-  ["date","moodLabel","energy","anxiety","memo"].forEach(k=>{ if(form.elements[k]) form.elements[k].value = log[k] ?? (k==="date"?todayISO():""); });
-  setChecks("moodTags", log.moodTags); syncRangeLabels(form); updateSupportPrompt();
+  ["date","moodLabel","energy","anxiety","reasonMemo","memo"].forEach(k=>{ if(form.elements[k]) form.elements[k].value = log[k] ?? (k==="date"?todayISO():""); });
+  setChecks("moodTags", log.moodTags);
+  setChecks("reasonTags", log.reasonTags);
+  syncRangeLabels(form); updateSupportPrompt();
 }
-function collectMood(){ const f=$("#moodForm"); const data=new FormData(f); return { date:data.get("date"), updatedAt:new Date().toISOString(), moodLabel:data.get("moodLabel"), energy:Number(data.get("energy")), anxiety:Number(data.get("anxiety")), moodTags:data.getAll("moodTags"), memo:data.get("memo")||"" }; }
-async function saveMood(event){ event.preventDefault(); const log=collectMood(); await idbPut("moodLogs", log); renderHome(characterLine(currentCharacter(), log.moodTags.some(t=>["ガチしんどい","甘やかして","泣きそう","動けない"].includes(t)) ? "tired" : "savedMood")); await renderMoodMiniList(); updateSupportPrompt(); showToast("気分を保存したよ"); }
-function moodSummary(log){ const a=[log.moodLabel, `気力${log.energy}/5`, log.anxiety?`不安${log.anxiety}/5`:""].filter(Boolean); if(log.moodTags?.length)a.push(log.moodTags.join("・")); if(log.memo)a.push(`メモ:${log.memo}`); return a.join(" / "); }
+function collectMood(){ const f=$("#moodForm"); const data=new FormData(f); return { date:data.get("date"), updatedAt:new Date().toISOString(), moodLabel:data.get("moodLabel"), energy:Number(data.get("energy")), anxiety:Number(data.get("anxiety")), moodTags:data.getAll("moodTags"), reasonTags:data.getAll("reasonTags"), reasonMemo:data.get("reasonMemo")||"", memo:data.get("memo")||"" }; }
+async function saveMood(event){ event.preventDefault(); const log=collectMood(); await idbPut("moodLogs", log); renderHome(characterLine(currentCharacter(), log.moodTags.some(t=>["ガチしんどい","甘やかして","泣きそう","動けない","頭が回らない"].includes(t)) || ["しょんぼり","イライラ","不安","泣きそう","無"].includes(log.moodLabel) ? "tired" : "savedMood")); await renderMoodMiniList(); if($("#logsPanel")?.classList.contains("active")) await renderLogsPanel(); updateSupportPrompt(); showToast("気分を保存したよ"); }
+function moodSummary(log){ const a=[log.moodLabel, `気力${log.energy}/5`, log.anxiety?`不安${log.anxiety}/5`:""].filter(Boolean); if(log.moodTags?.length)a.push(log.moodTags.join("・")); if(log.reasonTags?.length)a.push(`原因:${log.reasonTags.join("・")}`); if(log.reasonMemo)a.push(`きっかけ:${log.reasonMemo}`); if(log.memo)a.push(`メモ:${log.memo}`); return a.join(" / "); }
 async function renderMoodMiniList(){ const list=$("#moodMiniList"); if(!list)return; const logs=(await idbGetAll("moodLogs")).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4); list.innerHTML = logs.length ? logs.map(l=>`<article class="log-item"><time>${l.date}</time><p>${escapeHTML(moodSummary(l))}</p></article>`).join("") : `<p class="hint">まだ気分ログがないよ。</p>`; }
 function updateSupportPrompt(){
   const log = collectMood(); const chara=currentCharacter();
   const tags = log.moodTags.length ? log.moodTags.join("、") : "まだ選べてない";
-  const prompt = `${chara.call}、今しんどい。\n・気分：${log.moodLabel || "未入力"}\n・近い状態：${tags}\n・気力：${log.energy || 3}/5\n・不安：${log.anxiety || 0}/5\n・時刻：${new Date().toLocaleTimeString("ja-JP", {hour:"2-digit", minute:"2-digit"})}\n${log.memo ? `・メモ：${log.memo}\n` : ""}今は正論じゃなくて、まず甘やかしてほしい。必要なら、今できる小さい行動を一つだけ一緒に選んで。`;
+  const reasons = log.reasonTags.length ? log.reasonTags.join("、") : "まだ選べてない";
+  const isTired = ["しょんぼり","イライラ","不安","泣きそう","無"].includes(log.moodLabel) || log.moodTags.some(t=>["ガチしんどい","不安","泣きそう","動けない","頭が回らない"].includes(t));
+  const opening = isTired ? `${chara.call}、今しんどい。` : `${chara.call}、今の気分を聞いて。`;
+  const request = isTired ? "今は正論じゃなくて、まず甘やかしてほしい。必要なら、今できる小さい行動を一つだけ一緒に選んで。" : "この楽しい・嬉しい感じを一緒に味わってほしい。理由も拾って、少し褒めて。";
+  const prompt = `${opening}
+・気分：${log.moodLabel || "未入力"}
+・近い状態：${tags}
+・原因・きっかけ：${reasons}
+・気力：${log.energy || 3}/5
+・不安：${log.anxiety || 0}/5
+・時刻：${new Date().toLocaleTimeString("ja-JP", {hour:"2-digit", minute:"2-digit"})}
+${log.reasonMemo ? `・きっかけメモ：${log.reasonMemo}
+` : ""}${log.memo ? `・メモ：${log.memo}
+` : ""}${request}`;
   $("#supportPrompt").value = prompt;
 }
 async function copySupportPrompt(){ updateSupportPrompt(); try { await navigator.clipboard.writeText($("#supportPrompt").value); showToast("文章をコピーしたよ"); renderHome(characterLine(currentCharacter(), "tired")); } catch { showToast("コピーに失敗したかも。長押しでコピーしてね"); } }
@@ -462,6 +507,71 @@ function applySongPreset(charId, songId){
   form[`songUrl_${charId}`].value = song.url || "";
 }
 
+
+function lastNDays(n=14){
+  const out=[];
+  const base = new Date();
+  base.setHours(0,0,0,0);
+  for(let i=n-1;i>=0;i--){
+    const d = new Date(base);
+    d.setDate(base.getDate()-i);
+    const tz = d.getTimezoneOffset()*60000;
+    out.push(new Date(d - tz).toISOString().slice(0,10));
+  }
+  return out;
+}
+function renderLineChart(days, series, {min=0, max=5}={}){
+  const w=320, h=168, left=24, right=12, top=14, bottom=28;
+  const cw=w-left-right, ch=h-top-bottom;
+  const x=(i)=> left + (days.length<=1?0:(i/(days.length-1))*cw);
+  const y=(v)=> top + ((max - Number(v)) / (max-min)) * ch;
+  const grid=[0,1,2,3,4,5].map(v=>`<line class="chart-grid" x1="${left}" x2="${w-right}" y1="${y(v)}" y2="${y(v)}"/>`).join("");
+  const labels = days.filter((_,i)=> i===0 || i===days.length-1 || i%3===0).map((d,iAll)=>{
+    const idx = days.indexOf(d);
+    const date = new Date(d+"T00:00:00");
+    const lab = `${date.getMonth()+1}/${date.getDate()}`;
+    return `<text class="chart-label" x="${x(idx)}" y="${h-8}" text-anchor="middle">${lab}</text>`;
+  }).join("");
+  const lines = series.map(s=>{
+    const pts = s.values.map((v,i)=> Number.isFinite(Number(v)) ? `${x(i)},${y(v)}` : null).filter(Boolean).join(" ");
+    const dots = s.values.map((v,i)=> Number.isFinite(Number(v)) ? `<circle class="chart-dot ${s.cls}" cx="${x(i)}" cy="${y(v)}" r="3.2"/>` : "").join("");
+    return pts ? `<polyline class="chart-line ${s.cls}" points="${pts}"/>${dots}` : "";
+  }).join("");
+  return `<svg class="chart-svg" viewBox="0 0 ${w} ${h}" role="img" aria-label="ロググラフ">${grid}<line class="chart-axis" x1="${left}" x2="${w-right}" y1="${y(min)}" y2="${y(min)}"/><text class="chart-scale" x="${w-8}" y="${y(max)+4}" text-anchor="end">5</text><text class="chart-scale" x="${w-8}" y="${y(min)-4}" text-anchor="end">0</text>${labels}${lines}</svg>`;
+}
+async function renderLogsPanel(){
+  const days = lastNDays(14);
+  const moodLogs = await idbGetAll("moodLogs");
+  const healthLogs = await idbGetAll("healthLogs");
+  const moodMap = Object.fromEntries(moodLogs.map(l=>[l.date,l]));
+  const healthMap = Object.fromEntries(healthLogs.map(l=>[l.date,l]));
+  const moodChart = $("#moodChart");
+  const healthChart = $("#healthChart");
+  if(moodChart){
+    moodChart.innerHTML = renderLineChart(days, [
+      { cls:"energy", values: days.map(d=>moodMap[d]?.energy) },
+      { cls:"anxiety", values: days.map(d=>moodMap[d]?.anxiety) }
+    ]);
+  }
+  if(healthChart){
+    healthChart.innerHTML = renderLineChart(days, [
+      { cls:"fatigue", values: days.map(d=>healthMap[d]?.fatigue) },
+      { cls:"headache", values: days.map(d=>healthMap[d]?.headache) },
+      { cls:"stomach", values: days.map(d=>healthMap[d]?.stomachache) },
+      { cls:"period", values: days.map(d=>healthMap[d]?.periodPain) }
+    ]);
+  }
+  const mCount = moodLogs.filter(l=>days.includes(l.date)).length;
+  const hCount = healthLogs.filter(l=>days.includes(l.date)).length;
+  const mc=$("#moodChartCount"); if(mc) mc.textContent=`${mCount}件`;
+  const hc=$("#healthChartCount"); if(hc) hc.textContent=`${hCount}件`;
+  const counts = new Map();
+  moodLogs.filter(l=>days.includes(l.date)).flatMap(l=>l.reasonTags||[]).forEach(t=>counts.set(t,(counts.get(t)||0)+1));
+  const reason = [...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const box=$("#reasonSummary");
+  if(box){ box.innerHTML = reason.length ? reason.map(([tag,count])=>`<span class="tag-badge">${escapeHTML(tag)} <b>${count}</b></span>`).join("") : `<p class="hint">まだ原因・きっかけの記録がないよ。</p>`; }
+}
+
 function renderPickers(){
   const cp=$("#characterPicker"); if(cp){ cp.innerHTML=""; Object.values(characters).forEach(ch=>{ const b=document.createElement("button"); b.className=`picker-card ${settings.characterId===ch.id?"selected":""}`; b.style.backgroundImage=`linear-gradient(135deg, rgba(0,0,0,.52), rgba(0,0,0,.10)), url("${assetUrl(ch.image)}")`; b.innerHTML=`<span>${ch.name}</span><small>${ch.title}</small>`; b.onclick=()=>{ settings.characterId=ch.id; saveSettings(); renderHome(); renderPickers(); showToast(`${ch.name}に切り替えたよ`); }; cp.appendChild(b); }); }
   const bp=$("#backgroundPicker"); if(bp){ bp.innerHTML=""; Object.values(backgrounds).forEach(bg=>{ const b=document.createElement("button"); b.className=`picker-card room-card ${settings.backgroundId===bg.id?"selected":""}`; b.style.backgroundImage=`linear-gradient(135deg, rgba(0,0,0,.46), rgba(0,0,0,.16)), url("${assetUrl(bg.image)}")`; b.innerHTML=`<span>${bg.name}</span><small>${bg.id}</small>`; b.onclick=()=>{ settings.backgroundId=bg.id; saveSettings(); renderHome(`${bg.name}に移動したよ。`); renderPickers(); showToast(`${bg.name}に切り替えたよ`); }; bp.appendChild(b); }); }
@@ -476,7 +586,6 @@ function loadSettingsForm(){
   f.temperature.value=settings.temperature;
   f.rain.value=settings.rain;
   f.weatherMemo.value=settings.weatherMemo;
-  f.reminderText.value=settings.reminderText;
 }
 function saveSettingsForm(event){
   event.preventDefault();
@@ -488,7 +597,6 @@ function saveSettingsForm(event){
   settings.temperature=f.temperature.value.trim();
   settings.rain=f.rain.value.trim();
   settings.weatherMemo=f.weatherMemo.value.trim();
-  settings.reminderText=f.reminderText.value;
   saveSettings();
   renderHome();
   showToast("設定を保存したよ");
@@ -497,9 +605,11 @@ function saveSettingsForm(event){
 async function exportData(){ const payload={ exportedAt:new Date().toISOString(), settings, healthLogs:await idbGetAll("healthLogs"), moodLogs:await idbGetAll("moodLogs"), schedules:await idbGetAll("schedules"), diaries:await idbGetAll("diaries") }; const blob=new Blob([JSON.stringify(payload,null,2)], {type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`infinity-care-backup-${todayISO()}.json`; a.click(); URL.revokeObjectURL(url); }
 async function importData(event){ const file=event.target.files?.[0]; if(!file)return; try{ const p=JSON.parse(await file.text()); if(p.settings){ settings=mergeSettings(defaultSettings,p.settings); saveSettings(); } for(const [key,storeName] of [["healthLogs","healthLogs"],["moodLogs","moodLogs"],["schedules","schedules"],["diaries","diaries"]]){ if(Array.isArray(p[key])){ await idbClear(storeName); for(const item of p[key]) await idbPut(storeName,item); } } renderHome(); renderPickers(); loadSettingsForm(); showToast("バックアップを読み込んだよ"); }catch(e){ console.error(e); showToast("読み込みに失敗したかも"); } }
 
+function setActiveNav(panelId){ $$(".bottom-nav button[data-panel]").forEach(btn=>btn.classList.toggle("active", btn.dataset.panel===panelId)); }
+
 async function clearPrototypeCaches(){ if("serviceWorker" in navigator){ try{ const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); }catch{} } if("caches" in window){ try{ const keys=await caches.keys(); await Promise.all(keys.filter(k=>k.startsWith("infinity-care")).map(k=>caches.delete(k))); }catch{} } }
 function bindEvents(){
-  $$(".bottom-nav button[data-panel]").forEach(b=>b.addEventListener("click",()=>openPanel(b.dataset.panel)));
+  $$(".bottom-nav button[data-panel]").forEach(b=>b.addEventListener("click",()=>{ setActiveNav(b.dataset.panel); setSpeech(weatherSpeechLine()); openPanel(b.dataset.panel); }));
   $("#openSettings").addEventListener("click",()=>openPanel("settingsPanel"));
   $(".home-stage").addEventListener("click", (e)=>{ if(e.target.closest(".character, .speech-card")) setSpeech(homeTapLine()); });
   $$(".close-panel").forEach(b=>b.addEventListener("click", closePanels));
@@ -520,5 +630,5 @@ function bindEvents(){
   $("#scheduleForm").date.value=todayISO(); $("#healthForm").date.value=todayISO(); $("#moodForm").date.value=todayISO(); $("#diaryForm").date.value=todayISO();
 }
 
-async function init(){ await clearPrototypeCaches(); db=await openDB(); bindEvents(); preloadBackgrounds(); renderHome(); renderPickers(); loadSettingsForm(); syncRangeLabels(document); await renderSchedules(); maybeRefreshWeather(); }
+async function init(){ await clearPrototypeCaches(); db=await openDB(); bindEvents(); preloadBackgrounds(); renderHome(); renderPickers(); loadSettingsForm(); syncRangeLabels(document); setActiveNav("moodPanel"); await renderSchedules(); maybeRefreshWeather(); setInterval(updateClock, 30 * 1000); }
 init().catch(e=>{ console.error(e); showToast("初期化に失敗したかも"); });

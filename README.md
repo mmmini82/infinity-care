@@ -1,9 +1,13 @@
-# ∞Care no timer icon v1
+# ∞Care prototype mood/log v1
 
-生成した悠くんの∞CareアイコンをPWAアイコンに設定した版です。
+今回の修正:
+- ホームの天気カードを撤去
+- ホーム日付の横に時刻を追加
+- 下メニューを押すとキャラが天気をセリフで話す
+- 入力フォームの重なり対策としてスマホでは縦積み
+- 通知文編集欄を削除
+- 気分に楽しい/嬉しい系と原因・きっかけ記録を追加
+- ログ画面に気力・不安・体調ゲージの簡易グラフを追加
 
-- 起動: `start-infinity-care.bat`
-- URL: `http://localhost:5206/`
-- PWA / ホーム画面アイコン: `assets/app-icon-512.png` / `assets/apple-touch-icon.png`
-
-既にホーム画面へ追加済みの場合、古いアイコンが残ることがあります。その場合は一度ホーム画面から削除して、ブラウザを更新してから追加し直してください。
+起動: start-infinity-care.bat
+URL: http://localhost:5208/

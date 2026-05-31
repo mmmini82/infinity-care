@@ -1110,5 +1110,107 @@ body[data-room="wish-pillar"] .background-layer > img#backgroundImage {
   .character { max-width: min(124%, 470px) !important; }
 }
 
-/* no-timer v1 */
-.feature-nav { grid-template-columns: repeat(5, 1fr); }
+
+
+
+/* mood-log v1 refinements */
+.app-shell {
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 6px;
+}
+.today-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+#timeLabel {
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-size: clamp(14px, 4.2vw, 18px);
+  letter-spacing: .04em;
+  color: rgba(255,255,255,.76);
+  font-weight: 800;
+  text-shadow: 0 3px 14px rgba(0,0,0,.45);
+}
+.weather-card { display: none !important; }
+.feature-nav { grid-template-columns: repeat(6, 1fr); }
+.bottom-nav button:nth-child(1)::before { content:"✦"; }
+.bottom-nav button:nth-child(2)::before { content:"♡"; }
+.bottom-nav button:nth-child(3)::before { content:"☾"; }
+.bottom-nav button:nth-child(4)::before { content:"⌁"; }
+.bottom-nav button:nth-child(5)::before { content:"◌"; }
+.bottom-nav button:nth-child(6)::before { content:"⚙︎"; }
+.bottom-nav button:nth-child(2) {
+  color: rgba(255,255,255,.76);
+  background: transparent;
+  box-shadow: none;
+}
+.bottom-nav button.active {
+  color: #fff;
+  background: linear-gradient(145deg, rgba(var(--accent-2-rgb),.42), rgba(var(--accent-rgb),.22));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+}
+@media (max-width: 520px) {
+  .form-grid.card-form { grid-template-columns: 1fr !important; }
+  .form-grid.card-form > label,
+  .form-grid.card-form > fieldset,
+  .form-grid.card-form > button,
+  .form-grid.card-form > .full,
+  .weather-actions { grid-column: 1 / -1 !important; }
+  .panel { align-items: start; padding-top: max(18px, env(safe-area-inset-top)); overflow: auto; }
+  .panel-card { width: min(94vw, 430px); max-height: none; margin-bottom: 18px; }
+  .feature-panel-card { max-height: none; }
+  .bottom-nav { grid-template-columns: repeat(6, 1fr); gap: 3px; }
+  .bottom-nav button { font-size: 8.5px; }
+}
+.logs-card { gap: 11px; }
+.chart-card {
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 18px;
+  background: rgba(255,255,255,.07);
+}
+.chart-wrap {
+  overflow: hidden;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.10));
+  border: 1px solid rgba(255,255,255,.08);
+}
+.chart-svg { display:block; width:100%; height:auto; min-height: 158px; }
+.chart-grid { stroke: rgba(255,255,255,.10); stroke-width: 1; }
+.chart-axis { stroke: rgba(255,255,255,.22); stroke-width: 1; }
+.chart-label, .chart-scale { fill: rgba(255,255,255,.58); font-size: 9px; }
+.chart-line { fill:none; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+.chart-dot { stroke: rgba(12,8,18,.85); stroke-width: 1.6; }
+.chart-line.energy, .chart-dot.energy, .legend-dot.energy { stroke: var(--accent); background: var(--accent); fill: var(--accent); }
+.chart-line.anxiety, .chart-dot.anxiety, .legend-dot.anxiety { stroke: var(--accent-2); background: var(--accent-2); fill: var(--accent-2); }
+.chart-line.fatigue, .chart-dot.fatigue, .legend-dot.fatigue { stroke: #d7c8ff; background: #d7c8ff; fill: #d7c8ff; }
+.chart-line.headache, .chart-dot.headache, .legend-dot.headache { stroke: #ffb0c9; background: #ffb0c9; fill: #ffb0c9; }
+.chart-line.stomach, .chart-dot.stomach, .legend-dot.stomach { stroke: #aee8ff; background: #aee8ff; fill: #aee8ff; }
+.chart-line.period, .chart-dot.period, .legend-dot.period { stroke: #ffd0ef; background: #ffd0ef; fill: #ffd0ef; }
+.legend-row {
+  display:flex;
+  flex-wrap:wrap;
+  gap: 8px 12px;
+  align-items:center;
+  margin-top: 8px;
+  color: rgba(255,255,255,.72);
+  font-size: 11px;
+  font-weight: 800;
+}
+.legend-dot { width: 9px; height: 9px; border-radius: 99px; display:inline-block; margin-right: -6px; }
+.reason-cloud { display:flex; flex-wrap:wrap; gap:7px; }
+.tag-badge {
+  display:inline-flex;
+  align-items:center;
+  gap: 5px;
+  padding: 7px 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.88);
+  font-size: 12px;
+  font-weight: 800;
+}
+.tag-badge b { color: var(--accent); }
+.reason-chips label, .mood-chips label { min-height: 30px; }

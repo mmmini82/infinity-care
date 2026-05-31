@@ -1,4 +1,4 @@
-const BUILD_VERSION = "mood-log-20260601-1";
+const BUILD_VERSION = "mood-log-20260601-2";
 const SETTINGS_KEY = "infinityCare.moodLog.settings";
 const DB_NAME = "infinity-care-db-layout-weather-v1";
 
@@ -252,6 +252,32 @@ function weatherCodeIcon(code, fallbackText=""){
   const w = fallbackText || "";
   return w.includes("雨") ? "☔︎" : w.includes("晴") ? "☀︎" : w.includes("雪") ? "❄︎" : "☁︎";
 }
+
+function weatherEmoji(code, fallbackText=""){
+  const c = Number(code);
+  if([0,1].includes(c)) return "☀️";
+  if([2,3,45,48].includes(c)) return "☁️";
+  if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(c)) return "☔️";
+  if([71,73,75,77,85,86].includes(c)) return "❄️";
+  if([95,96,99].includes(c)) return "⚡️";
+  const w = fallbackText || "";
+  return w.includes("雨") ? "☔️" : w.includes("晴") ? "☀️" : w.includes("雪") ? "❄️" : "☁️";
+}
+function weatherMiniText(){
+  const hasWeather = settings.weather || settings.temperature || settings.rain;
+  if(!hasWeather) return "";
+  const temp = settings.temperature || "--℃";
+  const rain = settings.rain || "--%";
+  return `${weatherEmoji(settings.weatherCode, settings.weather)} ${temp}/${rain}`;
+}
+function renderWeatherMini(){
+  const el = $("#weatherMini");
+  if(!el) return;
+  const text = weatherMiniText();
+  el.textContent = text;
+  el.title = text ? `${settings.weatherLocationName || settings.weatherCity || "天気"}：${settings.weather || ""}` : "";
+  el.hidden = !text;
+}
 function formatWeatherUpdatedAt(value){
   if(!value) return "";
   const d = new Date(value);
@@ -259,6 +285,7 @@ function formatWeatherUpdatedAt(value){
   return new Intl.DateTimeFormat("ja-JP", { hour:"2-digit", minute:"2-digit" }).format(d);
 }
 function renderWeather(){
+  renderWeatherMini();
   const summaryEl = $("#weatherSummary");
   const noteEl = $("#weatherNote");
   const iconEl = $("#weatherIcon");
@@ -349,6 +376,7 @@ function maybeRefreshWeather(){
 }
 function renderHome(extraLine = ""){
   const chara = currentCharacter(); const bg = currentBackground();
+  document.body.dataset.character = chara.id;
   $("#todayLabel").textContent = formatDateLabel();
   updateClock();
   setBackgroundImage(bg); applyTheme(); applyCharacterScale(); renderWeather();

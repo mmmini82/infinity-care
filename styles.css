@@ -1132,6 +1132,23 @@ body[data-room="wish-pillar"] .background-layer > img#backgroundImage {
   font-weight: 800;
   text-shadow: 0 3px 14px rgba(0,0,0,.45);
 }
+#weatherMini {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 8px 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.82);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-size: clamp(12px, 3.5vw, 15px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: .01em;
+  text-shadow: 0 3px 12px rgba(0,0,0,.38);
+  white-space: nowrap;
+}
 .weather-card { display: none !important; }
 .feature-nav { grid-template-columns: repeat(6, 1fr); }
 .bottom-nav button:nth-child(1)::before { content:"✦"; }
@@ -1214,3 +1231,16 @@ body[data-room="wish-pillar"] .background-layer > img#backgroundImage {
 }
 .tag-badge b { color: var(--accent); }
 .reason-chips label, .mood-chips label { min-height: 30px; }
+
+
+/* mood-log v2 refinements */
+body[data-character="haruka"] .character {
+  left: 52.5% !important;
+}
+@media (max-width: 380px) {
+  body[data-character="haruka"] .character {
+    left: 53% !important;
+  }
+  #weatherMini { font-size: 11px; padding-inline: 6px; }
+  .today-line { gap: 7px; }
+}

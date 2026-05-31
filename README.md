@@ -10,4 +10,9 @@
 - ログ画面に気力・不安・体調ゲージの簡易グラフを追加
 
 起動: start-infinity-care.bat
-URL: http://localhost:5208/
+URL: http://localhost:5210/
+
+
+## v2
+- ホームの日付横にミニ天気表示を追加
+- 悠だけ少し右寄せして見た目の中心を調整

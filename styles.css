@@ -1971,3 +1971,23 @@ body::before {
 .reward-card {
   z-index: 10000 !important;
 }
+
+
+/* ui-aknk v12: real chibi reward images */
+.reward-chibi-wrap {
+  width: 156px !important;
+  height: 156px !important;
+  border-radius: 28px !important;
+  background:
+    radial-gradient(circle at 50% 22%, rgba(255,255,255,.34), rgba(255,255,255,.08) 55%, rgba(0,0,0,.12)) !important;
+}
+.reward-chibi-wrap img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  transform: none !important;
+}
+.reward-card {
+  width: min(92vw, 360px) !important;
+}

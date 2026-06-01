@@ -1,4 +1,4 @@
-const BUILD_VERSION = "ui-aknk-v11-rewardfix-20260601-1";
+const BUILD_VERSION = "ui-aknk-v12-chibi-20260602-1";
 const SETTINGS_KEY = "infinityCare.moodLog.settings";
 const DB_NAME = "infinity-care-db-mood-log-v3";
 
@@ -622,6 +622,13 @@ function affinityLevel(value){
   return "通常";
 }
 
+
+function chibiImageFor(chara){
+  const map = { haruka:"haruka", akane:"akane", masumi:"masumi", hin:"hin" };
+  const key = map[chara?.id] || "haruka";
+  return `assets/chibis/${key}.png`;
+}
+
 function ensureRewardOverlay(){
   let overlay = $("#rewardOverlay");
   if(overlay) return overlay;
@@ -631,7 +638,7 @@ function ensureRewardOverlay(){
   overlay.setAttribute("aria-hidden","true");
   overlay.innerHTML = `<div class="reward-card">
     <button class="reward-close" id="rewardClose" type="button">×</button>
-    <div class="reward-chibi-wrap"><img alt="ほめほめキャラ" id="rewardChibi" src="assets/characters/haruka.png"/></div>
+    <div class="reward-chibi-wrap"><img alt="ほめほめキャラ" id="rewardChibi" src="assets/chibis/haruka.png"/></div>
     <p class="reward-title" id="rewardTitle">ToDo達成！</p>
     <p class="reward-line" id="rewardLine">南帆、えらいよ。</p>
     <div class="reward-gains"><span id="rewardXp">+10 XP</span><span id="rewardAffinity">好感度 +2</span></div>
@@ -649,7 +656,7 @@ function showReward({ title="ToDo達成！", line="", xp=0, affinity=0, chara=cu
   const lineEl=$("#rewardLine");
   const xpEl=$("#rewardXp");
   const affEl=$("#rewardAffinity");
-  if(chibi) chibi.src = assetUrl(chara.image);
+  if(chibi) chibi.src = chibiImageFor(chara);
   if(titleEl) titleEl.textContent = title;
   if(lineEl) lineEl.textContent = line || randomFrom(rewardPraiseLines[chara.id] || rewardPraiseLines.haruka);
   if(xpEl) xpEl.textContent = `+${xp} XP`;

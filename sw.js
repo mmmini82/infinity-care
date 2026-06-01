@@ -1,4 +1,4 @@
-const CACHE_NAME = "infinity-care-ui-aknk-v11-rewardfix";
+const CACHE_NAME = "infinity-care-ui-aknk-v12-chibi";
 const ASSETS = [
   "./",
   "./index.html",
@@ -23,6 +23,10 @@ const ASSETS = [
   "./assets/backgrounds/07-wish-pillar.jpg",
   "./assets/backgrounds/08-sougetsukan-lobby.jpg",
   "./assets/backgrounds/09-hien-shrine.jpg"
+  "assets/chibis/haruka.png",
+  "assets/chibis/akane.png",
+  "assets/chibis/masumi.png",
+  "assets/chibis/hin.png",
 ];
 
 self.addEventListener("install", (event) => {

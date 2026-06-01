@@ -1,6 +1,6 @@
-# ∞Care prototype UI aknk v11 rewardfix
+# ∞Care prototype UI aknk v12 chibi
 
-- ToDo完了時のほめほめポップアップが出ない問題を修正
-- クリック処理をイベント委任にして安定化
-- ポップアップを最前面に強制表示
-- URL: http://localhost:5234/
+- v11のほめほめポップアップ修正はそのまま
+- ほめほめポップアップ用に4人のちびキャラ画像を追加
+- ToDo完了時、設定中キャラのちびキャラが表示される
+- URL: http://localhost:5236/

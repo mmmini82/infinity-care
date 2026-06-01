@@ -1,6 +1,7 @@
-# ∞Care prototype UI aknk v9 subtabs
+# ∞Care prototype UI aknk v10 rewards lines
 
-- 体調タブ内に「体調 / ご飯 / 運動」サブタブ
-- 予定タブ内に「カレンダー / ToDo」サブタブ
-- ToDoに日常プリセット（歯磨き、お風呂、夜の薬、言語学習など）
-- URL: http://localhost:5230/
+- ToDo完了時に設定キャラ画像つきのほめほめポップアップ
+- XPによる背景解放一覧
+- キャラ別好感度ゲージと甘めホーム台詞
+- ロググラフを塗りつぶしなしの折れ線グラフに変更
+- URL: http://localhost:5232/

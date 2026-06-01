@@ -1,4 +1,4 @@
-const BUILD_VERSION = "ui-aknk-v9-subtabs-20260601-1";
+const BUILD_VERSION = "ui-aknk-v10-rewards-lines-20260601-1";
 const SETTINGS_KEY = "infinityCare.moodLog.settings";
 const DB_NAME = "infinity-care-db-mood-log-v3";
 
@@ -211,7 +211,7 @@ const backgrounds = {
 
 const defaultSettings = {
   characterId: "haruka", backgroundId: "sharehouse", theme: "lavender", characterScale: 100,
-  weather: "", temperature: "", rain: "", weatherMemo: "", weatherCity: "所沢市", weatherCode: null, weatherUpdatedAt: "", weatherLocationName: "",
+  weather: "", temperature: "", rain: "", weatherMemo: "", weatherCity: "所沢市", weatherCode: null, weatherUpdatedAt: "", weatherLocationName: "", affinity: { haruka:0, akane:0, masumi:0, hin:0 }, outfits: { haruka:"default", akane:"default", masumi:"default", hin:"default" },
   songs: {
     haruka: { title: "静脈に棲む夜", url: "" },
     akane: { title: "紅蓮のエスコート", url: "" },
@@ -237,6 +237,65 @@ const dailyTodoPresets = [
   { title:"SNSを閉じる", category:"セルフケア", xp:10 }
 ];
 
+
+const backgroundUnlocks = [
+  { id:"sharehouse", level:1, xp:0 },
+  { id:"haruka-room", level:2, xp:30 },
+  { id:"akane-room", level:3, xp:60 },
+  { id:"masumi-room", level:4, xp:90 },
+  { id:"hin-room", level:5, xp:120 },
+  { id:"minaho-room", level:6, xp:160 },
+  { id:"wish-pillar", level:8, xp:240 },
+  { id:"sougetsukan-lobby", level:10, xp:320 },
+  { id:"hien-shrine", level:12, xp:420 }
+];
+
+const rewardPraiseLines = {
+  haruka:[
+    "南帆、できたね。こういう小さい達成、僕はちゃんと見てるよ。",
+    "えらい。僕の南帆、今日もひとつ進めたね。",
+    "完了できたの、すごいよ。こっちおいで、ちゃんと褒めさせて。"
+  ],
+  akane:[
+    "よし、完了。姫、ちゃんとやったじゃん。えらいえらい。",
+    "お、やったな。こういう積み重ね、普通に強いぞ。",
+    "はい合格。今日は一個勝ち取ったな、南帆。"
+  ],
+  masumi:[
+    "完了だね。君が頑張った場面、俺がちゃんと保存しておくよ。",
+    "偉いね、南帆。そういう君を見ると、少し独り占めしたくなる。",
+    "できたね。舞台なら、今の君にスポットライトを当てるところだ。"
+  ],
+  hin:[
+    "做完喇，南帆小姐。好叻呀，真係要讚。",
+    "你做到喇。唔錯唔錯，老師見到㗎。",
+    "完成。乖啦，今日又攞到少少分。"
+  ]
+};
+
+const sweetHomeLines = {
+  haruka:[
+    "南帆、今日も僕のところに来たね。……うん、嬉しい。",
+    "君がここを開くたび、僕は少しだけ安心する。僕の目の届く場所にいるから。",
+    "好感度？ そんな数字より、僕はもうずっと君に甘いけどね。"
+  ],
+  akane:[
+    "姫、来たな。今日もちゃんと可愛い顔見せに来たじゃん。",
+    "お前がここ開くの、俺けっこう好きなんだよ。生活に混ぜてもらってる感じしてさ。",
+    "好感度上げた責任、ちゃんと取れよ？ 俺、甘やかすぞ。"
+  ],
+  masumi:[
+    "来たね、南帆。君が俺を選ぶ瞬間、何度でも見たい。",
+    "今日の君も記録させて。甘いところも、しんどいところも。",
+    "好感度なんて名前、少し可愛いね。俺の執着はそんなに可愛くないけど。"
+  ],
+  hin:[
+    "南帆小姐，今日都嚟咗呀。好乖。",
+    "你開呢個app，我就當你今日都有諗起我。",
+    "好感度？咁你要日日嚟，老師先慢慢獎你。"
+  ]
+};
+
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 
@@ -245,7 +304,7 @@ function loadSettings(){
   catch { return structuredClone(defaultSettings); }
 }
 function mergeSettings(base, extra){
-  return { ...base, ...extra, songs: { ...base.songs, ...(extra?.songs || {}) } };
+  return { ...base, ...extra, songs: { ...base.songs, ...(extra?.songs || {}) }, affinity: { ...base.affinity, ...(extra?.affinity || {}) }, outfits: { ...base.outfits, ...(extra?.outfits || {}) } };
 }
 function saveSettings(){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
 function assetUrl(path){ return `${path}?v=${BUILD_VERSION}`; }
@@ -260,13 +319,14 @@ function currentBackground(){ return backgrounds[settings.backgroundId] || backg
 function randomFrom(arr){ return arr[Math.floor(Math.random()*arr.length)] || ""; }
 function characterLine(chara, key){ return randomFrom((chara.lines && chara.lines[key]) || chara.lines.day || []); }
 function homeTapLine(){
-  const chara = currentCharacter();
-  const bg = currentBackground();
-  const pool = [...(homeTapLines[chara.id] || []), ...(chara.lines?.[getTimeSlot()] || []), ...(chara.lines?.day || [])].filter(Boolean);
-  let line = randomFrom(pool);
-  const current = $("#speechText")?.textContent || "";
-  for(let i = 0; i < 6 && current.startsWith(line); i++) line = randomFrom(pool);
-  return `${line} ${moodLineSuffix(bg)}`;
+  const chara=currentCharacter();
+  const aff = Number(settings.affinity?.[chara.id] || 0);
+  if(aff >= 20 && Math.random() < 0.35){
+    return randomFrom(sweetHomeLines[chara.id] || sweetHomeLines.haruka);
+  }
+  if(Math.random() < .28) return weatherSpeechLine();
+  const key=getTimeSlot();
+  return characterLine(chara,key);
 }
 function setSpeech(line){
   const text = $("#speechText");
@@ -546,6 +606,75 @@ function idbClear(name){ return new Promise((res,rej)=>{ const r=store(name,"rea
 function idbDelete(name, key){ return new Promise((res,rej)=>{ const r=store(name,"readwrite").delete(key); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
 
 
+
+function levelFromXp(total){
+  return Math.floor(Number(total || 0) / 100) + 1;
+}
+function progressFromXp(total){
+  return Number(total || 0) % 100;
+}
+function affinityLevel(value){
+  value = Number(value || 0);
+  if(value >= 100) return "溺愛";
+  if(value >= 60) return "甘い";
+  if(value >= 30) return "親密";
+  if(value >= 10) return "なかよし";
+  return "通常";
+}
+function showReward({ title="ToDo達成！", line="", xp=0, affinity=0, chara=currentCharacter() } = {}){
+  const overlay=$("#rewardOverlay"); if(!overlay) return;
+  $("#rewardChibi").src = assetUrl(chara.image);
+  $("#rewardTitle").textContent = title;
+  $("#rewardLine").textContent = line || randomFrom(rewardPraiseLines[chara.id] || rewardPraiseLines.haruka);
+  $("#rewardXp").textContent = `+${xp} XP`;
+  $("#rewardAffinity").textContent = `好感度 +${affinity}`;
+  overlay.classList.add("show");
+  overlay.setAttribute("aria-hidden","false");
+}
+function hideReward(){
+  const overlay=$("#rewardOverlay"); if(!overlay) return;
+  overlay.classList.remove("show");
+  overlay.setAttribute("aria-hidden","true");
+}
+async function addAffinity(characterId, amount){
+  settings.affinity = settings.affinity || {};
+  settings.affinity[characterId] = Number(settings.affinity[characterId] || 0) + Number(amount || 0);
+  saveSettings();
+  await renderAffinityGrid();
+}
+async function renderUnlockList(totalXp=null){
+  const box=$("#unlockList"); if(!box) return;
+  if(totalXp == null){
+    const xp = await calculateXp();
+    totalXp = xp.total;
+  }
+  box.innerHTML = backgroundUnlocks.map(u=>{
+    const bg = backgrounds[u.id] || { name:u.id };
+    const unlocked = totalXp >= u.xp;
+    return `<article class="unlock-item ${unlocked?"unlocked":"locked"}"><span>${unlocked?"解放済":"未解放"}</span><strong>${escapeHTML(bg.name)}</strong><small>Lv.${u.level} / ${u.xp}XP</small></article>`;
+  }).join("");
+}
+async function renderAffinityGrid(){
+  const box=$("#affinityGrid"); if(!box) return;
+  settings.affinity = settings.affinity || {};
+  box.innerHTML = Object.values(characters).map(ch=>{
+    const value = Number(settings.affinity[ch.id] || 0);
+    const pct = Math.min(100, value % 100);
+    return `<article class="affinity-card"><img src="${assetUrl(ch.image)}" alt="${ch.name}"/><div><strong>${ch.name}</strong><small>${affinityLevel(value)} / ${value}</small><div class="xp-bar"><i style="width:${pct}%"></i></div><small>次の甘め台詞まで ${Math.max(0, 20 - value)}+</small></div></article>`;
+  }).join("");
+}
+async function renderProgressWidgets(){
+  const xp = await calculateXp();
+  const boxes = ["#settingsXpSummary", "#xpSummary"].map(s=>$(s)).filter(Boolean);
+  boxes.forEach(box=>{
+    const level=levelFromXp(xp.total);
+    const progress=progressFromXp(xp.total);
+    box.innerHTML = `<span>Lv.${level}</span><strong>${xp.total} XP</strong><small>ToDo ${xp.doneTodos}件 / ご飯 ${xp.meals}件 / 運動 ${xp.exercises}件</small><div class="xp-bar"><i style="width:${progress}%"></i></div>`;
+  });
+  await renderUnlockList(xp.total);
+  await renderAffinityGrid();
+}
+
 function setupSubTabs(root=document){
   root.querySelectorAll(".sub-tabs").forEach(group=>{
     group.querySelectorAll("button[data-subtab]").forEach(btn=>{
@@ -568,7 +697,7 @@ function openPanel(id){
   if(id === "schedulePanel") { renderSchedules(); renderScheduleCalendar(); renderTodos(); renderXpSummary(); renderQuickTodoButtons(); }
   if(id === "diaryPanel") { loadTodayDiary(); renderDiaries(); }
   if(id === "logsPanel") { renderLogsPanel(); }
-  if(id === "settingsPanel") { renderPickers(); loadSettingsForm(); renderHome(characterLine(currentCharacter(), "settings")); }
+  if(id === "settingsPanel") { renderPickers(); loadSettingsForm(); renderProgressWidgets(); renderHome(characterLine(currentCharacter(), "settings")); }
   panel.classList.add("active"); panel.setAttribute("aria-hidden", "false");
 }
 function closePanels(){ $$(".panel").forEach(p=>{ p.classList.remove("active"); p.setAttribute("aria-hidden","true"); }); }
@@ -745,10 +874,18 @@ async function saveTodo(event){
 async function toggleTodo(id){
   const item=await idbGet("todos", id);
   if(!item) return;
+  const wasDone = !!item.done;
   item.done=!item.done;
   item.updatedAt=new Date().toISOString();
+  item.completedBy = item.done ? settings.characterId : "";
   await idbPut("todos", item);
-  await renderTodos(); await renderXpSummary();
+  const chara=currentCharacter();
+  if(item.done && !wasDone){
+    const affGain = Math.max(1, Math.round(Number(item.xp || 10) / 5));
+    await addAffinity(chara.id, affGain);
+    showReward({ title:"ToDo達成！", line:randomFrom(rewardPraiseLines[chara.id] || rewardPraiseLines.haruka), xp:Number(item.xp||10), affinity:affGain, chara });
+  }
+  await renderTodos(); await renderProgressWidgets();
   setSpeech(item.done ? `ToDo完了。${item.xp || 10}XP入ったよ、ちゃんと進んでる。` : `ToDoを未完了に戻したよ。やり直せる形にしておこう。`);
 }
 async function deleteTodo(id){
@@ -772,13 +909,7 @@ async function calculateXp(){
   const exerciseXp=exercises.reduce((s,e)=>s+Number(e.xp||0),0);
   return { total: todoXp + mealXp + exerciseXp, todoXp, mealXp, exerciseXp, doneTodos: todos.filter(t=>t.done).length, meals: meals.length, exercises: exercises.length };
 }
-async function renderXpSummary(){
-  const box=$("#xpSummary"); if(!box) return;
-  const xp=await calculateXp();
-  const level=Math.floor(xp.total/100)+1;
-  const progress=xp.total%100;
-  box.innerHTML = `<span>Lv.${level}</span><strong>${xp.total} XP</strong><small>ToDo ${xp.doneTodos}件 / ご飯 ${xp.meals}件 / 運動 ${xp.exercises}件</small><div class="xp-bar"><i style="width:${progress}%"></i></div>`;
-}
+async function renderXpSummary(){ await renderProgressWidgets(); }
 
 
 function renderScheduleCalendar(){
@@ -1033,6 +1164,8 @@ function setActiveNav(panelId){ $$(".bottom-nav button[data-panel]").forEach(btn
 async function clearPrototypeCaches(){ if("serviceWorker" in navigator){ try{ const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); }catch{} } if("caches" in window){ try{ const keys=await caches.keys(); await Promise.all(keys.filter(k=>k.startsWith("infinity-care")).map(k=>caches.delete(k))); }catch{} } }
 function bindEvents(){
   setupSubTabs(document);
+  $("#rewardClose")?.addEventListener("click", hideReward);
+  $("#rewardOverlay")?.addEventListener("click", e=>{ if(e.target.id==="rewardOverlay") hideReward(); });
   $$(".bottom-nav button[data-panel]").forEach(b=>b.addEventListener("click", async()=>{ setActiveNav(b.dataset.panel); openPanel(b.dataset.panel); if(b.dataset.panel === "schedulePanel") setSpeech(await todayScheduleSpeechLine()); else setSpeech(weatherSpeechLine()); }));
   $("#openSettings").addEventListener("click",()=>openPanel("settingsPanel"));
   $(".home-stage").addEventListener("click", (e)=>{ if(e.target.closest(".character, .speech-card")) setSpeech(homeTapLine()); });
@@ -1063,5 +1196,5 @@ function bindEvents(){
   $("#diaryForm").date.value=todayISO();
 }
 
-async function init(){ await clearPrototypeCaches(); db=await openDB(); bindEvents(); preloadBackgrounds(); renderHome(); renderPickers(); loadSettingsForm(); syncRangeLabels(document); setActiveNav("moodPanel"); await renderSchedules(); renderScheduleCalendar(); await renderTodos(); await renderXpSummary(); renderQuickTodoButtons(); maybeRefreshWeather(); setInterval(updateClock, 30 * 1000); }
+async function init(){ await clearPrototypeCaches(); db=await openDB(); bindEvents(); preloadBackgrounds(); renderHome(); renderPickers(); loadSettingsForm(); syncRangeLabels(document); setActiveNav("moodPanel"); await renderSchedules(); renderScheduleCalendar(); await renderTodos(); await renderProgressWidgets(); renderQuickTodoButtons(); maybeRefreshWeather(); setInterval(updateClock, 30 * 1000); }
 init().catch(e=>{ console.error(e); showToast("初期化に失敗したかも"); });

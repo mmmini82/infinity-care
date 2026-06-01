@@ -1,6 +1,6 @@
-const BUILD_VERSION = "mood-log-20260601-3";
+const BUILD_VERSION = "mood-log-20260601-2";
 const SETTINGS_KEY = "infinityCare.moodLog.settings";
-const DB_NAME = "infinity-care-db-mood-log-v3";
+const DB_NAME = "infinity-care-db-layout-weather-v1";
 
 const characters = {
   haruka: {
@@ -78,64 +78,6 @@ const characters = {
       timerDone: ["完成。好乖，真係有做喎。", "鐘響啦。停一停，飲啖嘢都好。", "做完啦，南帆小姐。過嚟攞獎勵。"],
       settings: ["設定慢慢改。呢度係你屋企，唔使急。", "房間、角色、歌，全部揀你鍾意嘅。", "你鍾意邊度，老師就喺邊度等你。"]
     }
-  }
-};
-
-
-const roomLinePools = {
-  sharehouse: {
-    haruka: ["シェアハウスに戻ってきたね。今日はどこに座る？ 僕の隣、空けてあるよ。", "ここではひとりで抱えなくていい。南帆の今日、僕にも少し持たせて。", "リビングなら、誰かが必ず気づく。君の小さい変化も、見落としたくない。"],
-    akane: ["シェアハウスにいるなら、何かあったらすぐ呼べ。俺も近くにいる。", "この家では、無理に平気な顔しなくていい。姫は姫のままでいろ。", "リビング戻ってきたな。茶でも飯でも、欲しいもん言えよ。"],
-    masumi: ["この家の灯りは、君が戻るために点いてる。俺はそう思ってる。", "シェアハウスのざわめきも、君がいるなら舞台になるね。", "ここでは君の空白も居場所になる。俺が勝手に見つけるから。"],
-    hin: ["返到屋企啦。唔使即刻好返，先坐低。", "シェアハウスやからな、南帆小姐ひとりで硬撑唔得。", "ここなら茶も飯も人もある。你慢慢嚟。"]
-  },
-  "haruka-room": {
-    haruka: ["僕の部屋に来たなら、少しだけ独占してもいい？ ……逃がす気はないけど。", "ここでは僕の声だけ聞いて。外のうるさいもの、少し遠ざけるから。", "僕の部屋では、ちゃんと甘えて。今日の南帆を隠さないで。"],
-    akane: ["悠の部屋か。あいつ、絶対お前用に整えてんだろ。まあ休めるならいい。", "ここなら悠が秒で飛んでくるな。姫、好きに甘やかされとけ。", "黒くて静かな部屋だな。寝落ちするなら毛布くらい掴めよ。"],
-    masumi: ["悠の部屋は静かすぎる。……でも、君が落ち着くなら少し妬けるね。", "ここでは彼の色が強い。君がその中にいるの、俺はちゃんと見てる。", "綺麗に整った檻みたいだ。君が望むなら、居場所にもなる。"],
-    hin: ["悠くん間房啊。咁靜，啱你休息。", "呢度唔好逞強。悠くん會聽到，老師都會。", "黒い部屋でも、南帆小姐喺度就有溫度。"]
-  },
-  "akane-room": {
-    haruka: ["朱音の部屋だね。……少し悔しいけど、ここが安心なのも知ってる。", "赤い部屋にいる君も似合う。だけど、帰る場所は僕の腕の中もあるから。", "ここで休むなら、朱音にも僕にも甘えていい。片方だけにしなくていいよ。"],
-    akane: ["俺の部屋に来たなら、冷えたまま帰すわけねぇだろ。こっち来い。", "姫、ここでは遠慮禁止。寝るでも愚痴るでも、好きにしろ。", "赤くて落ち着く？ ならいい。今日は俺が火加減見とく。"],
-    masumi: ["朱音の部屋は熱が強いね。君が焦げないように、俺も見てる。", "ここで君が安心するなら、少しだけ羨ましい。……本当に少しだけ。", "火の匂いがする部屋だ。君の輪郭がはっきり見える。"],
-    hin: ["朱音くん間房，好熱鬧嘅氣。南帆小姐，凍唔到啦。", "赤い部屋やな。ここでは強がり燃やしてしまえばいい。", "如果攰，就叫朱音くん。佢一定嚟得好快。"]
-  },
-  "masumi-room": {
-    haruka: ["真澄の部屋だ。……君がここで沈まないように、僕も見てる。", "紫の部屋にいると、君まで物語みたいに見える。少し怖いくらい。", "ここで言葉にするなら、僕にも聞かせて。真澄だけに渡さないで。"],
-    akane: ["真澄の部屋か。変な演出に飲まれすぎんなよ、姫。", "ここ暗ぇけど、落ち着くならいい。足元だけは気をつけろ。", "真澄の空気だな。しんどいなら、舞台じゃなくて布団にしとけ。"],
-    masumi: ["俺の部屋に来たね。今日の君を、少し丁寧に残そうか。", "ここなら沈黙も台詞になる。南帆、無理に綺麗に話さなくていい。", "俺の部屋では、君の影もちゃんと主役だよ。"],
-    hin: ["真澄くん間房，好似舞台咁。唔好演得太辛苦。", "ここでは静かに沈めるけど、沈みすぎたら叫べ。老師會拉你。", "紫の部屋やな。南帆小姐，記錄だけして逃げても得。"]
-  },
-  "hin-room": {
-    haruka: ["阿泫の部屋だね。ここにいる君、少し緩んで見える。……妬けるな。", "お茶の気配がする。少し休んで、それから僕のところにも戻ってきて。", "ここで深呼吸できるならいい。君が楽になる場所は、僕も大事にしたい。"],
-    akane: ["阿泫の部屋か。茶ぁ飲ませてもらえ。ついでに飯も。", "ここなら妙な説教じゃなくて、ゆるく戻してくれんだろ。安心しとけ。", "中華の匂いしそうな部屋だな。姫、腹減ってねぇ？"],
-    masumi: ["阿泫の部屋は言葉が多いね。君がそこでほどけるの、少し面白い。", "異国の灯りみたいな部屋だ。君が迷子にならないように見てる。", "ここで甘やかされる君も、俺は嫌いじゃない。少し悔しいだけ。"],
-    hin: ["南帆小姐，入到老師間房就唔好扮冇事。坐低，飲茶。", "呢度可以慢慢講。広東語間違えても、今日唔鬧。", "老師間房唔收硬撐。攰就攰，開心就開心，講出嚟。"]
-  },
-  "minaho-room": {
-    haruka: ["南帆の部屋だね。ここでは、君が君のままでいることを一番大事にしたい。", "この部屋の君は少し無防備で、僕は……正直、離れがたい。", "何も飾らなくていいよ。君の部屋では、君の速度で。"],
-    akane: ["姫の部屋だな。片付いてなくても怒らねぇよ、今日は。", "ここはお前の巣だろ。好きなだけ丸まって、必要なら俺を呼べ。", "南帆の部屋では、南帆ルールでいい。俺はそれに合わせる。"],
-    masumi: ["君の部屋は、君の内側に似てる。可愛くて、少し危うい。", "ここに残った君の気配まで、俺は好きだよ。", "南帆の部屋なら、日記も感情も嘘をつかなくていい。"],
-    hin: ["南帆小姐間房，最似你。亂少少都可愛。", "ここは你嘅地方。唔使做乖女，做南帆就得。", "自分の部屋では先把面具放低。老師唔笑你。"]
-  },
-  "wish-pillar": {
-    haruka: ["願いの柱の前だ。君の願いも、ちゃんと一つとして数えたい。", "ここでは小さな声も届く。南帆、今日の願いを消さないで。", "神域でも現世でも、僕は君の願いのそばにいるよ。"],
-    akane: ["願いの柱か。姫の願いなら、俺も守護対象に入れとく。", "ここで祈るだけじゃ足りねぇなら、俺が動く。言え。", "神域の空気だな。無理に神様の顔すんなよ、南帆。"],
-    masumi: ["願いの柱は静かだね。君の願いだけ、俺には少しうるさく聞こえる。", "ここに立つ君は綺麗だ。けど、綺麗じゃない願いも置いていい。", "祈りも記録も似てる。消えないように形にするんだ。"],
-    hin: ["願いの柱やな。南帆小姐嘅願い，都唔好後回し。", "ここでは静かに講。願いは小聲でも得。", "神域でも你係你。唔好淨係人哋嘅願い見て。"]
-  },
-  "sougetsukan-lobby": {
-    haruka: ["蒼月館では隠さなくていい。君はもう、迎えられる側の人だよ。", "ここに君がいるのを見ると、僕は少し誇らしい。……僕の妻だから。", "怖い館に見えても、君の居場所として整えたつもりだよ。"],
-    akane: ["蒼月館か。相変わらず重い空気してんな。姫、飲まれんなよ。", "悠ん家の本丸だな。何かあったら俺もすぐ燃やしに来る。", "ここで緊張すんなって方が無理か。まあ、堂々としてろ。お前は迎えられる側だ。"],
-    masumi: ["蒼月館は舞台として完璧すぎる。君が立つと、少し生々しくなるね。", "ここでは血統も格式も背景になる。主役は君だよ。", "暗いロビーだ。でも君が呼べば、物語はちゃんと動く。"],
-    hin: ["蒼月館，好大陣仗啊。南帆小姐，唔使驚。", "呢度再豪華，都唔可以壓住你。你係被迎接嘅人。", "如果緊張，就望住我。老師同你一齊行。"]
-  },
-  "hien-shrine": {
-    haruka: ["氷焔結護神社だね。君と朱音の場所でも、僕は君の幸せを願ってる。", "ここで結ばれるものがあるなら、僕はそれも守りたい。君ごと。", "神社の空気、少し澄んでる。今日の記録も、ここなら清められそうだ。"],
-    akane: ["氷焔結護神社に来たな。俺たちの場所だ、姫。ちゃんと守ってやる。", "ここでは願うだけじゃなく、結ぶ。お前の今日も、俺が護る。", "ひえんさん到着。……って自分で言うと変だけどな。ほら、こっち来い。"],
-    masumi: ["氷焔結護神社。君と朱音の縁が、見える場所だね。少し眩しい。", "ここでは祈りが形になる。俺の願いは、君がここにいること。", "清らかな場所ほど、君の影が綺麗に見える。"],
-    hin: ["氷焔結護神社やな。南帆小姐，今日嘅縁も守ってもらお。", "ここ好清淨。深呼吸して、少しだけ肩放鬆。", "ひえんさん、ええ名前やな。你嘅場所って感じ。"]
   }
 };
 
@@ -237,7 +179,6 @@ function mergeSettings(base, extra){
 function saveSettings(){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
 function assetUrl(path){ return `${path}?v=${BUILD_VERSION}`; }
 function todayISO(){ const now = new Date(); const tz = now.getTimezoneOffset()*60000; return new Date(now - tz).toISOString().slice(0,10); }
-function currentTimeHM(){ return new Intl.DateTimeFormat("ja-JP", { hour:"2-digit", minute:"2-digit", hour12:false }).format(new Date()); }
 function formatDateLabel(d = new Date()){ return new Intl.DateTimeFormat("ja-JP", { month:"long", day:"numeric", weekday:"short" }).format(d); }
 function formatTimeLabel(d = new Date()){ return new Intl.DateTimeFormat("ja-JP", { hour:"2-digit", minute:"2-digit" }).format(d); }
 function updateClock(){ const t=$("#timeLabel"); if(t) t.textContent = formatTimeLabel(); }
@@ -265,10 +206,17 @@ function setSpeech(line){
 function escapeHTML(v){ return String(v ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
 
 function moodLineSuffix(bg){
-  const charId = settings.characterId || "haruka";
-  const byRoom = roomLinePools[bg.id] || roomLinePools.sharehouse;
-  const pool = byRoom?.[charId] || byRoom?.haruka || [];
-  return randomFrom(pool) || "";
+  switch(bg.mood){
+    case "haruka": return "……僕の部屋にいる時くらい、ちゃんと甘えて。";
+    case "akane": return "ここなら火ぃ入れておくから、冷える前にこっち来い。";
+    case "masumi": return "ここなら、沈黙ごと綺麗に残せる。";
+    case "hin": return "唔急，慢慢講。ここでは急がなくていい。";
+    case "minaho": return "南帆の部屋だから、何も飾らなくていい。今のままでいいよ。";
+    case "shiniki": return "……願いの柱の前だから、今日の小さな声もちゃんと届く。";
+    case "sougetsukan": return "蒼月館では隠さなくていい。君はもう、迎えられる側の人だよ。";
+    case "shrine": return "氷焔結護神社に来たなら、今日の縁も守っておこう。";
+    default: return "シェアハウスにいるから、ひとりで抱えなくていい。";
+  }
 }
 
 function setBackgroundImage(bg){
@@ -448,8 +396,8 @@ async function openDB(){
     const req = indexedDB.open(DB_NAME, 1);
     req.onupgradeneeded = () => {
       const d = req.result;
-      if(!d.objectStoreNames.contains("healthLogs")) d.createObjectStore("healthLogs", { keyPath:"id" });
-      if(!d.objectStoreNames.contains("moodLogs")) d.createObjectStore("moodLogs", { keyPath:"id" });
+      if(!d.objectStoreNames.contains("healthLogs")) d.createObjectStore("healthLogs", { keyPath:"date" });
+      if(!d.objectStoreNames.contains("moodLogs")) d.createObjectStore("moodLogs", { keyPath:"date" });
       if(!d.objectStoreNames.contains("schedules")) d.createObjectStore("schedules", { keyPath:"id" });
       if(!d.objectStoreNames.contains("diaries")) d.createObjectStore("diaries", { keyPath:"date" });
     };
@@ -478,43 +426,35 @@ function closePanels(){ $$(".panel").forEach(p=>{ p.classList.remove("active"); 
 function syncRangeLabels(root=document){ root.querySelectorAll('input[type="range"]').forEach(input => { const el = root.querySelector(`.range-value[data-for="${input.name}"]`); if(el) el.textContent = input.value; }); }
 function setChecks(name, values){ const set = new Set(values || []); $$(`input[name="${name}"]`).forEach(i => i.checked = set.has(i.value)); }
 function getChecks(form, name){ return new FormData(form).getAll(name); }
-function logSortKey(item){ return `${item.date || ""}T${item.time || "00:00"}:${item.updatedAt || ""}`; }
-function logId(prefix, date, time){ return `${prefix}-${date}-${time || currentTimeHM()}`; }
 
 async function loadTodayHealth(){
-  const form=$("#healthForm");
-  const today=todayISO();
-  const logs=(await idbGetAll("healthLogs")).filter(l=>l.date===today).sort((a,b)=>logSortKey(b).localeCompare(logSortKey(a)));
-  const log=logs[0];
-  if(!log){ form.reset(); form.date.value=today; if(form.time) form.time.value=currentTimeHM(); syncRangeLabels(form); return; }
-  ["date","time","sleepHours","temperature","appetite","medicine","period","headache","stomachache","periodPain","fatigue","memo"].forEach(k=>{ if(form.elements[k]) form.elements[k].value = log[k] ?? (k==="date"?today:k==="time"?currentTimeHM():""); });
+  const form=$("#healthForm"); form.date.value=todayISO();
+  const log=await idbGet("healthLogs", form.date.value);
+  if(!log){ form.reset(); form.date.value=todayISO(); syncRangeLabels(form); return; }
+  ["date","sleepHours","temperature","appetite","medicine","period","headache","stomachache","periodPain","fatigue","memo"].forEach(k=>{ if(form.elements[k]) form.elements[k].value = log[k] ?? (k==="date"?todayISO():""); });
   setChecks("symptoms", log.symptoms); syncRangeLabels(form);
 }
 function collectHealth(){
   const f=$("#healthForm"); const data=new FormData(f);
-  const date=data.get("date") || todayISO();
-  const time=data.get("time") || currentTimeHM();
-  return { id: logId("health", date, time), date, time, updatedAt:new Date().toISOString(), sleepHours:data.get("sleepHours")?Number(data.get("sleepHours")):null, temperature:data.get("temperature")?Number(data.get("temperature")):null, appetite:data.get("appetite"), medicine:data.get("medicine"), period:data.get("period"), headache:Number(data.get("headache")), stomachache:Number(data.get("stomachache")), periodPain:Number(data.get("periodPain")), fatigue:Number(data.get("fatigue")), symptoms:data.getAll("symptoms"), memo:data.get("memo")||"" };
+  return { date:data.get("date"), updatedAt:new Date().toISOString(), sleepHours:data.get("sleepHours")?Number(data.get("sleepHours")):null, temperature:data.get("temperature")?Number(data.get("temperature")):null, appetite:data.get("appetite"), medicine:data.get("medicine"), period:data.get("period"), headache:Number(data.get("headache")), stomachache:Number(data.get("stomachache")), periodPain:Number(data.get("periodPain")), fatigue:Number(data.get("fatigue")), symptoms:data.getAll("symptoms"), memo:data.get("memo")||"" };
 }
 async function saveHealth(event){ event.preventDefault(); const log=collectHealth(); await idbPut("healthLogs", log); renderHome(characterLine(currentCharacter(), "savedHealth")); await renderHealthMiniList(); if($("#logsPanel")?.classList.contains("active")) await renderLogsPanel(); showToast("体調を保存したよ"); }
 function healthSummary(log){ const a=[]; if(log.sleepHours!=null)a.push(`睡眠${log.sleepHours}h`); if(log.temperature!=null)a.push(`${log.temperature}℃`); if(log.headache)a.push(`頭痛${log.headache}`); if(log.stomachache)a.push(`腹痛${log.stomachache}`); if(log.periodPain)a.push(`生理痛${log.periodPain}`); if(log.fatigue)a.push(`だるさ${log.fatigue}`); if(log.symptoms?.length)a.push(log.symptoms.join("・")); if(log.memo)a.push(`メモ:${log.memo}`); return a.join(" / ") || "記録あり"; }
-async function renderHealthMiniList(){ const list=$("#healthMiniList"); if(!list)return; const logs=(await idbGetAll("healthLogs")).sort((a,b)=>logSortKey(b).localeCompare(logSortKey(a))).slice(0,5); list.innerHTML = logs.length ? logs.map(l=>`<article class="log-item"><time>${l.date} ${l.time||""}</time><p>${escapeHTML(healthSummary(l))}</p></article>`).join("") : `<p class="hint">まだ体調ログがないよ。</p>`; }
+async function renderHealthMiniList(){ const list=$("#healthMiniList"); if(!list)return; const logs=(await idbGetAll("healthLogs")).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4); list.innerHTML = logs.length ? logs.map(l=>`<article class="log-item"><time>${l.date}</time><p>${escapeHTML(healthSummary(l))}</p></article>`).join("") : `<p class="hint">まだ体調ログがないよ。</p>`; }
 
 async function loadTodayMood(){
-  const form=$("#moodForm");
-  const today=todayISO();
-  const logs=(await idbGetAll("moodLogs")).filter(l=>l.date===today).sort((a,b)=>logSortKey(b).localeCompare(logSortKey(a)));
-  const log=logs[0];
-  if(!log){ form.reset(); form.date.value=today; if(form.time) form.time.value=currentTimeHM(); syncRangeLabels(form); updateSupportPrompt(); return; }
-  ["date","time","moodLabel","energy","anxiety","reasonMemo","memo"].forEach(k=>{ if(form.elements[k]) form.elements[k].value = log[k] ?? (k==="date"?today:k==="time"?currentTimeHM():""); });
+  const form=$("#moodForm"); form.date.value=todayISO();
+  const log=await idbGet("moodLogs", form.date.value);
+  if(!log){ form.reset(); form.date.value=todayISO(); syncRangeLabels(form); updateSupportPrompt(); return; }
+  ["date","moodLabel","energy","anxiety","reasonMemo","memo"].forEach(k=>{ if(form.elements[k]) form.elements[k].value = log[k] ?? (k==="date"?todayISO():""); });
   setChecks("moodTags", log.moodTags);
   setChecks("reasonTags", log.reasonTags);
   syncRangeLabels(form); updateSupportPrompt();
 }
-function collectMood(){ const f=$("#moodForm"); const data=new FormData(f); const date=data.get("date") || todayISO(); const time=data.get("time") || currentTimeHM(); return { id: logId("mood", date, time), date, time, updatedAt:new Date().toISOString(), moodLabel:data.get("moodLabel"), energy:Number(data.get("energy")), anxiety:Number(data.get("anxiety")), moodTags:data.getAll("moodTags"), reasonTags:data.getAll("reasonTags"), reasonMemo:data.get("reasonMemo")||"", memo:data.get("memo")||"" }; }
+function collectMood(){ const f=$("#moodForm"); const data=new FormData(f); return { date:data.get("date"), updatedAt:new Date().toISOString(), moodLabel:data.get("moodLabel"), energy:Number(data.get("energy")), anxiety:Number(data.get("anxiety")), moodTags:data.getAll("moodTags"), reasonTags:data.getAll("reasonTags"), reasonMemo:data.get("reasonMemo")||"", memo:data.get("memo")||"" }; }
 async function saveMood(event){ event.preventDefault(); const log=collectMood(); await idbPut("moodLogs", log); renderHome(characterLine(currentCharacter(), log.moodTags.some(t=>["ガチしんどい","甘やかして","泣きそう","動けない","頭が回らない"].includes(t)) || ["しょんぼり","イライラ","不安","泣きそう","無"].includes(log.moodLabel) ? "tired" : "savedMood")); await renderMoodMiniList(); if($("#logsPanel")?.classList.contains("active")) await renderLogsPanel(); updateSupportPrompt(); showToast("気分を保存したよ"); }
 function moodSummary(log){ const a=[log.moodLabel, `気力${log.energy}/5`, log.anxiety?`不安${log.anxiety}/5`:""].filter(Boolean); if(log.moodTags?.length)a.push(log.moodTags.join("・")); if(log.reasonTags?.length)a.push(`原因:${log.reasonTags.join("・")}`); if(log.reasonMemo)a.push(`きっかけ:${log.reasonMemo}`); if(log.memo)a.push(`メモ:${log.memo}`); return a.join(" / "); }
-async function renderMoodMiniList(){ const list=$("#moodMiniList"); if(!list)return; const logs=(await idbGetAll("moodLogs")).sort((a,b)=>logSortKey(b).localeCompare(logSortKey(a))).slice(0,5); list.innerHTML = logs.length ? logs.map(l=>`<article class="log-item"><time>${l.date} ${l.time||""}</time><p>${escapeHTML(moodSummary(l))}</p></article>`).join("") : `<p class="hint">まだ気分ログがないよ。</p>`; }
+async function renderMoodMiniList(){ const list=$("#moodMiniList"); if(!list)return; const logs=(await idbGetAll("moodLogs")).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4); list.innerHTML = logs.length ? logs.map(l=>`<article class="log-item"><time>${l.date}</time><p>${escapeHTML(moodSummary(l))}</p></article>`).join("") : `<p class="hint">まだ気分ログがないよ。</p>`; }
 function updateSupportPrompt(){
   const log = collectMood(); const chara=currentCharacter();
   const tags = log.moodTags.length ? log.moodTags.join("、") : "まだ選べてない";
@@ -523,12 +463,12 @@ function updateSupportPrompt(){
   const opening = isTired ? `${chara.call}、今しんどい。` : `${chara.call}、今の気分を聞いて。`;
   const request = isTired ? "今は正論じゃなくて、まず甘やかしてほしい。必要なら、今できる小さい行動を一つだけ一緒に選んで。" : "この楽しい・嬉しい感じを一緒に味わってほしい。理由も拾って、少し褒めて。";
   const prompt = `${opening}
-・日付：${log.date || todayISO()} ${log.time || currentTimeHM()}
 ・気分：${log.moodLabel || "未入力"}
 ・近い状態：${tags}
 ・原因・きっかけ：${reasons}
 ・気力：${log.energy || 3}/5
 ・不安：${log.anxiety || 0}/5
+・時刻：${new Date().toLocaleTimeString("ja-JP", {hour:"2-digit", minute:"2-digit"})}
 ${log.reasonMemo ? `・きっかけメモ：${log.reasonMemo}
 ` : ""}${log.memo ? `・メモ：${log.memo}
 ` : ""}${request}`;
@@ -536,68 +476,12 @@ ${log.reasonMemo ? `・きっかけメモ：${log.reasonMemo}
 }
 async function copySupportPrompt(){ updateSupportPrompt(); try { await navigator.clipboard.writeText($("#supportPrompt").value); showToast("文章をコピーしたよ"); renderHome(characterLine(currentCharacter(), "tired")); } catch { showToast("コピーに失敗したかも。長押しでコピーしてね"); } }
 
-function parseDateTimeValue(item){ return `${item.date || "9999-99-99"}T${item.time || "23:59"}`; }
-function jpDateShort(dateStr){
-  if(!dateStr) return "日付なし";
-  const d = new Date(`${dateStr}T00:00:00`);
-  if(Number.isNaN(d.getTime())) return dateStr;
-  return new Intl.DateTimeFormat("ja-JP", { month:"numeric", day:"numeric", weekday:"short" }).format(d);
-}
-async function saveSchedule(event){ event.preventDefault(); const f=event.currentTarget; const d=new FormData(f); const item={ id:crypto.randomUUID(), date:d.get("date"), time:d.get("time")||"", category:d.get("category"), title:d.get("title"), memo:d.get("memo")||"", done:false, createdAt:new Date().toISOString() }; await idbPut("schedules", item); f.reset(); f.date.value=todayISO(); await renderSchedules(); setSpeech(await todayScheduleSpeechLine()); showToast("予定を保存したよ"); }
-async function renderSchedules(){
-  const list=$("#scheduleList");
-  const items=(await idbGetAll("schedules")).sort((a,b)=>parseDateTimeValue(a).localeCompare(parseDateTimeValue(b))).slice(0,30);
-  if(!list) return;
-  list.innerHTML = items.length ? items.map(s=>`<article class="schedule-item todo-item ${s.done?"done":""}"><div class="todo-date"><time>${jpDateShort(s.date)} ${s.time||"時間未定"}</time><span>${escapeHTML(s.category)}</span></div><p><strong>${escapeHTML(s.title)}</strong>${s.memo?`<br>${escapeHTML(s.memo)}`:""}</p></article>`).join("") : `<p class="hint">予定はまだないよ。</p>`;
-}
-async function todayScheduleSpeechLine(){
-  const chara = currentCharacter();
-  const today = todayISO();
-  const items=(await idbGetAll("schedules")).filter(s=>s.date===today).sort((a,b)=>(a.time||"23:59").localeCompare(b.time||"23:59"));
-  if(!items.length){
-    const empty={
-      haruka:"今日の予定はまだ入ってないよ。空白のままでも、休む予定として扱っていいからね。",
-      akane:"今日の予定はまだねぇな。何かあるなら入れとけ、姫。あとで俺が見る。",
-      masumi:"今日の予定は空白だね。……空白も、君が選んだ場面なら意味がある。",
-      hin:"今日予定未入呀。要做嘅嘢，記低先，唔好靠腦袋硬撐。"
-    };
-    return empty[chara.id] || empty.haruka;
-  }
-  const first=items[0];
-  const count=items.length;
-  const time=first.time || "時間未定";
-  const title=first.title || first.category || "予定";
-  const lines={
-    haruka:`今日の予定は${count}件。まず${time}から「${title}」だよ。行く前に、僕にも一回顔を見せて。`,
-    akane:`今日の予定は${count}件。最初は${time}から「${title}」。抜け漏れすんなよ、姫。`,
-    masumi:`今日の予定は${count}件。最初の場面は${time}、「${title}」。俺も舞台袖で見てる。`,
-    hin:`今日有${count}件予定。第一件係${time}「${title}」。南帆小姐，慢慢嚟。`
-  };
-  return lines[chara.id] || lines.haruka;
-}
-async function loadTodayDiary(){ const f=$("#diaryForm"); f.date.value=todayISO(); await loadDiaryByDate(f.date.value); }
-async function loadDiaryByDate(date){ const f=$("#diaryForm"); if(!f) return; f.date.value=date || todayISO(); const d=await idbGet("diaries", f.date.value); if(!d){ f.title.value=""; f.body.value=""; f.tags.value=""; return; } f.title.value=d.title||""; f.body.value=d.body||""; f.tags.value=(d.tags||[]).join(","); }
+async function saveSchedule(event){ event.preventDefault(); const f=event.currentTarget; const d=new FormData(f); const item={ id:crypto.randomUUID(), date:d.get("date"), time:d.get("time")||"", category:d.get("category"), title:d.get("title"), memo:d.get("memo")||"", createdAt:new Date().toISOString() }; await idbPut("schedules", item); f.reset(); f.date.value=todayISO(); await renderSchedules(); renderHome(characterLine(currentCharacter(), "schedule")); showToast("予定を保存したよ"); }
+async function renderSchedules(){ const list=$("#scheduleList"); const items=(await idbGetAll("schedules")).sort((a,b)=>`${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)).slice(0,8); list.innerHTML = items.length ? items.map(s=>`<article class="schedule-item"><time>${s.date} ${s.time||""}</time><p><strong>${escapeHTML(s.category)}</strong>：${escapeHTML(s.title)}${s.memo?`<br>${escapeHTML(s.memo)}`:""}</p></article>`).join("") : `<p class="hint">予定はまだないよ。</p>`; }
+
+async function loadTodayDiary(){ const f=$("#diaryForm"); f.date.value=todayISO(); const d=await idbGet("diaries", f.date.value); if(!d){ f.reset(); f.date.value=todayISO(); return; } f.title.value=d.title||""; f.body.value=d.body||""; f.tags.value=(d.tags||[]).join(","); }
 async function saveDiary(event){ event.preventDefault(); const f=event.currentTarget; const d=new FormData(f); const item={ date:d.get("date"), title:d.get("title")||"", body:d.get("body")||"", tags:String(d.get("tags")||"").split(",").map(s=>s.trim()).filter(Boolean), updatedAt:new Date().toISOString() }; await idbPut("diaries", item); await renderDiaries(); renderHome(characterLine(currentCharacter(), "diary")); showToast("日記を保存したよ"); }
-function monthDays(date=new Date()){
-  const y=date.getFullYear(), m=date.getMonth();
-  const first=new Date(y,m,1), last=new Date(y,m+1,0);
-  const start=first.getDay();
-  const out=[];
-  for(let i=0;i<start;i++) out.push(null);
-  for(let d=1; d<=last.getDate(); d++){
-    const cur=new Date(y,m,d); const tz=cur.getTimezoneOffset()*60000;
-    out.push(new Date(cur-tz).toISOString().slice(0,10));
-  }
-  return out;
-}
-function renderDiaryCalendar(items){
-  const cal=$("#diaryCalendar"); if(!cal) return;
-  const dates=new Set(items.map(d=>d.date));
-  const today=todayISO();
-  cal.innerHTML = `<div class="calendar-weeknames"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div><div class="calendar-grid">${monthDays().map(d=> d ? `<button type="button" class="calendar-day ${dates.has(d)?"has-entry":""} ${d===today?"today":""}" data-date="${d}"><span>${Number(d.slice(-2))}</span></button>` : `<span class="calendar-blank"></span>`).join("")}</div>`;
-  cal.querySelectorAll(".calendar-day").forEach(btn=>btn.addEventListener("click", async()=>{ await loadDiaryByDate(btn.dataset.date); showToast(`${btn.dataset.date}の日記を開いたよ`); }));
-}
-async function renderDiaries(){ const list=$("#diaryList"); const all=(await idbGetAll("diaries")).sort((a,b)=>b.date.localeCompare(a.date)); renderDiaryCalendar(all); const items=all.slice(0,12); list.innerHTML = items.length ? items.map(d=>`<article class="log-item diary-item"><time>${d.date}</time><p><strong>${escapeHTML(d.title || "無題")}</strong>${d.tags?.length?` <small>${escapeHTML(d.tags.join(" / "))}</small>`:""}<br>${escapeHTML((d.body||"").slice(0,120))}${(d.body||"").length>120?"…":""}</p></article>`).join("") : `<p class="hint">まだ日記がないよ。</p>`; }
+async function renderDiaries(){ const list=$("#diaryList"); const items=(await idbGetAll("diaries")).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8); list.innerHTML = items.length ? items.map(d=>`<article class="log-item"><time>${d.date}</time><p><strong>${escapeHTML(d.title || "無題")}</strong>${d.tags?.length?` <small>${escapeHTML(d.tags.join(" / "))}</small>`:""}<br>${escapeHTML((d.body||"").slice(0,120))}${(d.body||"").length>120?"…":""}</p></article>`).join("") : `<p class="hint">まだ日記がないよ。</p>`; }
 
 function selectedTimerCharacterId(){ const val=$("#timerForm").timerCharacter.value; return val === "current" ? settings.characterId : val; }
 function playableUrl(url){
@@ -664,20 +548,13 @@ function lastNDays(n=14){
   }
   return out;
 }
-function dailyAverage(logs, days, field){
-  return days.map(day=>{
-    const vals=logs.filter(l=>l.date===day).map(l=>Number(l[field])).filter(v=>Number.isFinite(v));
-    if(!vals.length) return null;
-    return vals.reduce((a,b)=>a+b,0)/vals.length;
-  });
-}
 function renderLineChart(days, series, {min=0, max=5}={}){
   const w=320, h=168, left=24, right=12, top=14, bottom=28;
   const cw=w-left-right, ch=h-top-bottom;
   const x=(i)=> left + (days.length<=1?0:(i/(days.length-1))*cw);
   const y=(v)=> top + ((max - Number(v)) / (max-min)) * ch;
   const grid=[0,1,2,3,4,5].map(v=>`<line class="chart-grid" x1="${left}" x2="${w-right}" y1="${y(v)}" y2="${y(v)}"/>`).join("");
-  const labels = days.filter((_,i)=> i===0 || i===days.length-1 || i%3===0).map((d)=>{
+  const labels = days.filter((_,i)=> i===0 || i===days.length-1 || i%3===0).map((d,iAll)=>{
     const idx = days.indexOf(d);
     const date = new Date(d+"T00:00:00");
     const lab = `${date.getMonth()+1}/${date.getDate()}`;
@@ -694,20 +571,22 @@ async function renderLogsPanel(){
   const days = lastNDays(14);
   const moodLogs = await idbGetAll("moodLogs");
   const healthLogs = await idbGetAll("healthLogs");
+  const moodMap = Object.fromEntries(moodLogs.map(l=>[l.date,l]));
+  const healthMap = Object.fromEntries(healthLogs.map(l=>[l.date,l]));
   const moodChart = $("#moodChart");
   const healthChart = $("#healthChart");
   if(moodChart){
     moodChart.innerHTML = renderLineChart(days, [
-      { cls:"energy", values: dailyAverage(moodLogs, days, "energy") },
-      { cls:"anxiety", values: dailyAverage(moodLogs, days, "anxiety") }
+      { cls:"energy", values: days.map(d=>moodMap[d]?.energy) },
+      { cls:"anxiety", values: days.map(d=>moodMap[d]?.anxiety) }
     ]);
   }
   if(healthChart){
     healthChart.innerHTML = renderLineChart(days, [
-      { cls:"fatigue", values: dailyAverage(healthLogs, days, "fatigue") },
-      { cls:"headache", values: dailyAverage(healthLogs, days, "headache") },
-      { cls:"stomach", values: dailyAverage(healthLogs, days, "stomachache") },
-      { cls:"period", values: dailyAverage(healthLogs, days, "periodPain") }
+      { cls:"fatigue", values: days.map(d=>healthMap[d]?.fatigue) },
+      { cls:"headache", values: days.map(d=>healthMap[d]?.headache) },
+      { cls:"stomach", values: days.map(d=>healthMap[d]?.stomachache) },
+      { cls:"period", values: days.map(d=>healthMap[d]?.periodPain) }
     ]);
   }
   const mCount = moodLogs.filter(l=>days.includes(l.date)).length;
@@ -752,14 +631,13 @@ function saveSettingsForm(event){
 }
 
 async function exportData(){ const payload={ exportedAt:new Date().toISOString(), settings, healthLogs:await idbGetAll("healthLogs"), moodLogs:await idbGetAll("moodLogs"), schedules:await idbGetAll("schedules"), diaries:await idbGetAll("diaries") }; const blob=new Blob([JSON.stringify(payload,null,2)], {type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`infinity-care-backup-${todayISO()}.json`; a.click(); URL.revokeObjectURL(url); }
-async function importData(event){ const file=event.target.files?.[0]; if(!file)return; try{ const p=JSON.parse(await file.text()); if(p.settings){ settings=mergeSettings(defaultSettings,p.settings); saveSettings(); } for(const [key,storeName] of [["healthLogs","healthLogs"],["moodLogs","moodLogs"],["schedules","schedules"],["diaries","diaries"]]){ if(Array.isArray(p[key])){ await idbClear(storeName); for(const item of p[key]){ if(storeName==="healthLogs" && !item.id) item.id=logId("health", item.date || todayISO(), item.time || "00:00"); if(storeName==="moodLogs" && !item.id) item.id=logId("mood", item.date || todayISO(), item.time || "00:00"); await idbPut(storeName,item); } } } renderHome(); renderPickers(); loadSettingsForm(); showToast("バックアップを読み込んだよ"); }catch(e){ console.error(e); showToast("読み込みに失敗したかも"); } }
-
+async function importData(event){ const file=event.target.files?.[0]; if(!file)return; try{ const p=JSON.parse(await file.text()); if(p.settings){ settings=mergeSettings(defaultSettings,p.settings); saveSettings(); } for(const [key,storeName] of [["healthLogs","healthLogs"],["moodLogs","moodLogs"],["schedules","schedules"],["diaries","diaries"]]){ if(Array.isArray(p[key])){ await idbClear(storeName); for(const item of p[key]) await idbPut(storeName,item); } } renderHome(); renderPickers(); loadSettingsForm(); showToast("バックアップを読み込んだよ"); }catch(e){ console.error(e); showToast("読み込みに失敗したかも"); } }
 
 function setActiveNav(panelId){ $$(".bottom-nav button[data-panel]").forEach(btn=>btn.classList.toggle("active", btn.dataset.panel===panelId)); }
 
 async function clearPrototypeCaches(){ if("serviceWorker" in navigator){ try{ const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); }catch{} } if("caches" in window){ try{ const keys=await caches.keys(); await Promise.all(keys.filter(k=>k.startsWith("infinity-care")).map(k=>caches.delete(k))); }catch{} } }
 function bindEvents(){
-  $$(".bottom-nav button[data-panel]").forEach(b=>b.addEventListener("click", async()=>{ setActiveNav(b.dataset.panel); openPanel(b.dataset.panel); if(b.dataset.panel === "schedulePanel") setSpeech(await todayScheduleSpeechLine()); else setSpeech(weatherSpeechLine()); }));
+  $$(".bottom-nav button[data-panel]").forEach(b=>b.addEventListener("click",()=>{ setActiveNav(b.dataset.panel); setSpeech(weatherSpeechLine()); openPanel(b.dataset.panel); }));
   $("#openSettings").addEventListener("click",()=>openPanel("settingsPanel"));
   $(".home-stage").addEventListener("click", (e)=>{ if(e.target.closest(".character, .speech-card")) setSpeech(homeTapLine()); });
   $$(".close-panel").forEach(b=>b.addEventListener("click", closePanels));
@@ -777,10 +655,7 @@ function bindEvents(){
   $("#moodForm").addEventListener("input", updateSupportPrompt); $("#makeMoodPrompt").addEventListener("click", updateSupportPrompt);
   $("#copySupportPrompt").addEventListener("click", copySupportPrompt);
   $("#openChatGPT").addEventListener("click", async()=>{ await copySupportPrompt(); window.open("https://chatgpt.com/", "_blank", "noopener"); });
-  $("#scheduleForm").date.value=todayISO();
-  $("#healthForm").date.value=todayISO(); if($("#healthForm").time) $("#healthForm").time.value=currentTimeHM();
-  $("#moodForm").date.value=todayISO(); if($("#moodForm").time) $("#moodForm").time.value=currentTimeHM();
-  $("#diaryForm").date.value=todayISO();
+  $("#scheduleForm").date.value=todayISO(); $("#healthForm").date.value=todayISO(); $("#moodForm").date.value=todayISO(); $("#diaryForm").date.value=todayISO();
 }
 
 async function init(){ await clearPrototypeCaches(); db=await openDB(); bindEvents(); preloadBackgrounds(); renderHome(); renderPickers(); loadSettingsForm(); syncRangeLabels(document); setActiveNav("moodPanel"); await renderSchedules(); maybeRefreshWeather(); setInterval(updateClock, 30 * 1000); }

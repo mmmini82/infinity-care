@@ -1,4 +1,4 @@
-const BUILD_VERSION = "adhd-reward-v2-gohoubi-20260601";
+const BUILD_VERSION = "ui-aknk-v7-weatherfix-20260601-1";
 const SETTINGS_KEY = "infinityCare.moodLog.settings";
 const DB_NAME = "infinity-care-db-mood-log-v3";
 
@@ -282,6 +282,57 @@ function setBackgroundImage(bg){
 function preloadBackgrounds(){ Object.values(backgrounds).forEach(bg => { const im = new Image(); im.src = assetUrl(bg.image); }); }
 function applyTheme(){ document.body.classList.remove("theme-blood","theme-snow","theme-night"); if(settings.theme !== "lavender") document.body.classList.add(`theme-${settings.theme}`); }
 function applyCharacterScale(){ document.documentElement.style.setProperty("--character-scale", String(settings.characterScale / 100)); }
+
+const WEATHER_PLACE_PRESETS = {
+  "所沢": { name:"所沢市 / 埼玉県", latitude:35.7992, longitude:139.4686 },
+  "所沢市": { name:"所沢市 / 埼玉県", latitude:35.7992, longitude:139.4686 },
+  "小竹向原": { name:"小竹向原 / 東京都", latitude:35.7435, longitude:139.6787 },
+  "池袋": { name:"池袋 / 東京都", latitude:35.7289, longitude:139.7100 },
+  "新宿": { name:"新宿 / 東京都", latitude:35.6896, longitude:139.7006 },
+  "神保町": { name:"神保町 / 東京都", latitude:35.6959, longitude:139.7575 },
+  "代々木": { name:"代々木 / 東京都", latitude:35.6833, longitude:139.7020 },
+  "舞浜": { name:"舞浜 / 千葉県", latitude:35.6367, longitude:139.8833 },
+  "浦安": { name:"浦安市 / 千葉県", latitude:35.6539, longitude:139.9022 },
+  "東京": { name:"東京 / 東京都", latitude:35.6762, longitude:139.6503 },
+  "横浜": { name:"横浜市 / 神奈川県", latitude:35.4437, longitude:139.6380 },
+  "大阪": { name:"大阪市 / 大阪府", latitude:34.6937, longitude:135.5023 },
+  "京都": { name:"京都市 / 京都府", latitude:35.0116, longitude:135.7681 },
+  "長崎": { name:"長崎市 / 長崎県", latitude:32.7503, longitude:129.8777 },
+  "島原": { name:"島原市 / 長崎県", latitude:32.7881, longitude:130.3708 },
+  "香港": { name:"香港", latitude:22.3193, longitude:114.1694 },
+  "hong kong": { name:"Hong Kong", latitude:22.3193, longitude:114.1694 }
+};
+function normalizeWeatherQuery(value){
+  return String(value || "").trim().toLowerCase().replace(/[\s　]+/g,"").replace(/(市|区|町|村)$/g,"");
+}
+function weatherPresetFor(query){
+  const raw = String(query || "").trim();
+  if(WEATHER_PLACE_PRESETS[raw]) return WEATHER_PLACE_PRESETS[raw];
+  const normalized = normalizeWeatherQuery(raw);
+  for(const [key, value] of Object.entries(WEATHER_PLACE_PRESETS)){
+    if(normalizeWeatherQuery(key) === normalized) return value;
+  }
+  return null;
+}
+function chooseGeoResult(results, query){
+  if(!Array.isArray(results) || !results.length) return null;
+  const q = normalizeWeatherQuery(query);
+  const scored = results.map((r, index)=>{
+    const name = normalizeWeatherQuery(r.name);
+    const admin1 = normalizeWeatherQuery(r.admin1);
+    const admin2 = normalizeWeatherQuery(r.admin2);
+    let score = 0;
+    if(name === q) score += 100;
+    if(name.includes(q) || q.includes(name)) score += 45;
+    if(admin1 === q || admin2 === q) score += 35;
+    if(r.country_code === "JP") score += 18;
+    score += Math.max(0, 10 - index);
+    return { r, score };
+  });
+  scored.sort((a,b)=>b.score-a.score);
+  return scored[0].r;
+}
+
 function weatherCodeText(code){
   const c = Number(code);
   if([0].includes(c)) return "快晴";
@@ -372,24 +423,34 @@ function weatherSpeechLine(){
   };
   return lines[chara.id] || lines.haruka;
 }
-async function updateWeatherFromCity(showMessage=true){
-  const city = (settings.weatherCity || "").trim();
+async function updateWeatherFromCity(showMessage=true, cityOverride=""){
+  const formCity = $("#settingsForm")?.weatherCity?.value;
+  const city = String(cityOverride || formCity || settings.weatherCity || "").trim();
   if(!city){
     if(showMessage) showToast("設定で都市名を入れてね");
-    return;
+    return false;
   }
   try{
     if(showMessage) showToast(`${city}の天気を取りに行くね`);
-    const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=ja&format=json`;
-    const geoRes = await fetch(geoUrl);
-    if(!geoRes.ok) throw new Error("geocoding failed");
-    const geo = await geoRes.json();
-    const place = geo.results?.[0];
-    if(!place) throw new Error("location not found");
-    const lat = place.latitude;
-    const lon = place.longitude;
+    let lat, lon, placeName;
+    const preset = weatherPresetFor(city);
+    if(preset){
+      lat = preset.latitude;
+      lon = preset.longitude;
+      placeName = preset.name;
+    } else {
+      const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=10&language=ja&format=json`;
+      const geoRes = await fetch(geoUrl, { cache:"no-store" });
+      if(!geoRes.ok) throw new Error("geocoding failed");
+      const geo = await geoRes.json();
+      const place = chooseGeoResult(geo.results, city);
+      if(!place) throw new Error("location not found");
+      lat = place.latitude;
+      lon = place.longitude;
+      placeName = [place.name, place.admin1, place.country_code && place.country_code !== "JP" ? place.country : ""].filter(Boolean).join(" / ");
+    }
     const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&current=temperature_2m,weather_code,is_day,precipitation&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1`;
-    const forecastRes = await fetch(forecastUrl);
+    const forecastRes = await fetch(forecastUrl, { cache:"no-store" });
     if(!forecastRes.ok) throw new Error("forecast failed");
     const data = await forecastRes.json();
     const temp = data.current?.temperature_2m;
@@ -397,7 +458,6 @@ async function updateWeatherFromCity(showMessage=true){
     const rainProb = data.daily?.precipitation_probability_max?.[0];
     const maxTemp = data.daily?.temperature_2m_max?.[0];
     const minTemp = data.daily?.temperature_2m_min?.[0];
-    const placeName = [place.name, place.admin1].filter(Boolean).join(" / ");
     settings.weatherCity = city;
     settings.weatherLocationName = placeName || city;
     settings.weatherCode = Number.isFinite(Number(code)) ? Number(code) : null;
@@ -405,18 +465,23 @@ async function updateWeatherFromCity(showMessage=true){
     settings.temperature = Number.isFinite(Number(temp)) ? `${Math.round(Number(temp))}℃` : "";
     settings.rain = Number.isFinite(Number(rainProb)) ? `${Math.round(Number(rainProb))}%` : "";
     const hiLo = [Number.isFinite(Number(maxTemp)) ? `最高${Math.round(Number(maxTemp))}℃` : "", Number.isFinite(Number(minTemp)) ? `最低${Math.round(Number(minTemp))}℃` : ""].filter(Boolean).join(" / ");
-    settings.weatherMemo = `${placeName || city}${hiLo ? ` / ${hiLo}` : ""}`;
+    settings.weatherMemo = `${settings.weatherLocationName}${hiLo ? ` / ${hiLo}` : ""}`;
     settings.weatherUpdatedAt = new Date().toISOString();
     saveSettings();
     renderWeather();
     loadSettingsForm();
     if(showMessage){
-      setSpeech(`${placeName || city}の天気、取ってきたよ。${settings.weather}${settings.temperature ? `、今は${settings.temperature}` : ""}。`);
+      setSpeech(`${settings.weatherLocationName}の天気、取ってきたよ。${settings.weather}${settings.temperature ? `、今は${settings.temperature}` : ""}。`);
       showToast("天気を更新したよ");
     }
+    return true;
   }catch(e){
     console.error(e);
+    settings.weatherCity = city;
+    saveSettings();
+    loadSettingsForm();
     if(showMessage) showToast("天気を取れなかったかも。都市名を変えてみて");
+    return false;
   }
 }
 function maybeRefreshWeather(){
@@ -445,17 +510,13 @@ function showToast(message){ const t=$("#toast"); t.textContent=message; t.class
 
 async function openDB(){
   return new Promise((resolve,reject)=>{
-    const req = indexedDB.open(DB_NAME, 2);
+    const req = indexedDB.open(DB_NAME, 1);
     req.onupgradeneeded = () => {
       const d = req.result;
       if(!d.objectStoreNames.contains("healthLogs")) d.createObjectStore("healthLogs", { keyPath:"id" });
       if(!d.objectStoreNames.contains("moodLogs")) d.createObjectStore("moodLogs", { keyPath:"id" });
       if(!d.objectStoreNames.contains("schedules")) d.createObjectStore("schedules", { keyPath:"id" });
       if(!d.objectStoreNames.contains("diaries")) d.createObjectStore("diaries", { keyPath:"date" });
-      if(!d.objectStoreNames.contains("dailyTasks")) d.createObjectStore("dailyTasks", { keyPath:"id" });
-      if(!d.objectStoreNames.contains("taskCompletions")) d.createObjectStore("taskCompletions", { keyPath:"id" });
-      if(!d.objectStoreNames.contains("oneShotTasks")) d.createObjectStore("oneShotTasks", { keyPath:"id" });
-      if(!d.objectStoreNames.contains("rewardEvents")) d.createObjectStore("rewardEvents", { keyPath:"id" });
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -471,7 +532,7 @@ function openPanel(id){
   const panel = document.getElementById(id); if(!panel) return;
   if(id === "healthPanel") { loadTodayHealth(); renderHealthMiniList(); }
   if(id === "moodPanel") { loadTodayMood(); renderMoodMiniList(); updateSupportPrompt(); }
-  if(id === "schedulePanel"){ renderSchedules(); renderTaskPanel(); }
+  if(id === "schedulePanel") renderSchedules();
   if(id === "diaryPanel") { loadTodayDiary(); renderDiaries(); }
   if(id === "logsPanel") { renderLogsPanel(); }
   if(id === "settingsPanel") { renderPickers(); loadSettingsForm(); renderHome(characterLine(currentCharacter(), "settings")); }
@@ -536,7 +597,7 @@ function collectHealth(){
   const sleepHours = calcSleepHours(sleepStart, sleepEnd);
   return { id: logId("health", date, time), date, time, updatedAt:new Date().toISOString(), sleepStart, sleepEnd, sleepHours, temperature:data.get("temperature")?Number(data.get("temperature")):null, appetite:data.get("appetite"), medicine:data.get("medicine"), period:data.get("period"), headache:Number(data.get("headache")), stomachache:Number(data.get("stomachache")), periodPain:Number(data.get("periodPain")), fatigue:Number(data.get("fatigue")), symptoms:data.getAll("symptoms"), memo:data.get("memo")||"" };
 }
-async function saveHealth(event){ event.preventDefault(); const log=collectHealth(); await idbPut("healthLogs", log); const xp=await rewardForRecord("health", 5, "体調記録"); renderHome(`${characterLine(currentCharacter(), "savedHealth")}  +${xp}EXP`); await renderHealthMiniList(); if($("#logsPanel")?.classList.contains("active")) await renderLogsPanel(); showToast("体調を保存したよ"); }
+async function saveHealth(event){ event.preventDefault(); const log=collectHealth(); await idbPut("healthLogs", log); renderHome(characterLine(currentCharacter(), "savedHealth")); await renderHealthMiniList(); if($("#logsPanel")?.classList.contains("active")) await renderLogsPanel(); showToast("体調を保存したよ"); }
 function healthSummary(log){ const a=[]; const sleep=sleepLabel(log); if(sleep)a.push(sleep); if(log.temperature!=null)a.push(`${log.temperature}℃`); if(log.headache)a.push(`頭痛${log.headache}`); if(log.stomachache)a.push(`腹痛${log.stomachache}`); if(log.periodPain)a.push(`生理痛${log.periodPain}`); if(log.fatigue)a.push(`だるさ${log.fatigue}`); if(log.symptoms?.length)a.push(log.symptoms.join("・")); if(log.memo)a.push(`メモ:${log.memo}`); return a.join(" / ") || "記録あり"; }
 async function renderHealthMiniList(){ const list=$("#healthMiniList"); if(!list)return; const logs=(await idbGetAll("healthLogs")).sort((a,b)=>logSortKey(b).localeCompare(logSortKey(a))).slice(0,5); list.innerHTML = logs.length ? logs.map(l=>`<article class="log-item"><time>${l.date} ${l.time||""}</time><p>${escapeHTML(healthSummary(l))}</p></article>`).join("") : `<p class="hint">まだ体調ログがないよ。</p>`; }
 
@@ -552,7 +613,7 @@ async function loadTodayMood(){
   syncRangeLabels(form); updateSupportPrompt();
 }
 function collectMood(){ const f=$("#moodForm"); const data=new FormData(f); const date=data.get("date") || todayISO(); const time=data.get("time") || currentTimeHM(); return { id: logId("mood", date, time), date, time, updatedAt:new Date().toISOString(), moodLabel:data.get("moodLabel"), energy:Number(data.get("energy")), anxiety:Number(data.get("anxiety")), moodTags:data.getAll("moodTags"), reasonTags:data.getAll("reasonTags"), reasonMemo:data.get("reasonMemo")||"", memo:data.get("memo")||"" }; }
-async function saveMood(event){ event.preventDefault(); const log=collectMood(); await idbPut("moodLogs", log); const xp=await rewardForRecord("mood", 5, "気分記録"); renderHome(`${characterLine(currentCharacter(), log.moodTags.some(t=>["ガチしんどい","甘やかして","泣きそう","動けない","頭が回らない"].includes(t)) || ["しょんぼり","イライラ","不安","泣きそう","無"].includes(log.moodLabel) ? "tired" : "savedMood")}  +${xp}EXP`); await renderMoodMiniList(); if($("#logsPanel")?.classList.contains("active")) await renderLogsPanel(); updateSupportPrompt(); showToast("気分を保存したよ"); }
+async function saveMood(event){ event.preventDefault(); const log=collectMood(); await idbPut("moodLogs", log); renderHome(characterLine(currentCharacter(), log.moodTags.some(t=>["ガチしんどい","甘やかして","泣きそう","動けない","頭が回らない"].includes(t)) || ["しょんぼり","イライラ","不安","泣きそう","無"].includes(log.moodLabel) ? "tired" : "savedMood")); await renderMoodMiniList(); if($("#logsPanel")?.classList.contains("active")) await renderLogsPanel(); updateSupportPrompt(); showToast("気分を保存したよ"); }
 function moodSummary(log){ const a=[log.moodLabel, `気力${log.energy}/5`, log.anxiety?`不安${log.anxiety}/5`:""].filter(Boolean); if(log.moodTags?.length)a.push(log.moodTags.join("・")); if(log.reasonTags?.length)a.push(`原因:${log.reasonTags.join("・")}`); if(log.reasonMemo)a.push(`きっかけ:${log.reasonMemo}`); if(log.memo)a.push(`メモ:${log.memo}`); return a.join(" / "); }
 async function renderMoodMiniList(){ const list=$("#moodMiniList"); if(!list)return; const logs=(await idbGetAll("moodLogs")).sort((a,b)=>logSortKey(b).localeCompare(logSortKey(a))).slice(0,5); list.innerHTML = logs.length ? logs.map(l=>`<article class="log-item"><time>${l.date} ${l.time||""}</time><p>${escapeHTML(moodSummary(l))}</p></article>`).join("") : `<p class="hint">まだ気分ログがないよ。</p>`; }
 function updateSupportPrompt(){
@@ -576,206 +637,6 @@ ${log.reasonMemo ? `・きっかけメモ：${log.reasonMemo}
 }
 async function copySupportPrompt(){ updateSupportPrompt(); try { await navigator.clipboard.writeText($("#supportPrompt").value); showToast("文章をコピーしたよ"); renderHome(characterLine(currentCharacter(), "tired")); } catch { showToast("コピーに失敗したかも。長押しでコピーしてね"); } }
 
-
-
-const rewardMilestones = [
-  { level: 2, title: "褒め台詞+", icon: "💬", desc: "褒められる準備、できてきたね" },
-  { level: 3, title: "夜の見守り", icon: "🌙", desc: "夜のセリフが少し濃くなる" },
-  { level: 5, title: "部屋セリフ+", icon: "🏠", desc: "居場所の反応が増える" },
-  { level: 8, title: "おかえり台詞", icon: "🔑", desc: "戻ってきた時の特別反応" },
-  { level: 10, title: "背景解放券", icon: "🖼️", desc: "新しい場所を増やす準備" },
-  { level: 15, title: "衣装差分券", icon: "👗", desc: "衣装追加のご褒美枠" },
-  { level: 20, title: "特別な約束", icon: "💍", desc: "かなり偉い領域" }
-];
-function newlyUnlocked(prevLevel, newLevel){
-  return rewardMilestones.filter(m => prevLevel < m.level && newLevel >= m.level);
-}
-function burstSparkles(count=28){
-  const layer = $("#sparkleLayer");
-  if(!layer) return;
-  layer.innerHTML = "";
-  for(let i=0;i<count;i++){
-    const s=document.createElement("span");
-    s.textContent = ["✦","♡","✧","+EXP","＊"][Math.floor(Math.random()*5)];
-    s.style.left = `${12 + Math.random()*76}%`;
-    s.style.top = `${18 + Math.random()*58}%`;
-    s.style.setProperty("--dx", `${(Math.random()*160)-80}px`);
-    s.style.setProperty("--dy", `${-40 - Math.random()*130}px`);
-    s.style.animationDelay = `${Math.random()*0.12}s`;
-    layer.appendChild(s);
-  }
-  layer.classList.add("active");
-  setTimeout(()=>{ layer.classList.remove("active"); layer.innerHTML=""; }, 1250);
-}
-function showRewardPopup(detail){
-  const pop=$("#rewardPop"); if(!pop) return;
-  const title = detail.title || rewardActionLabel(detail.kind);
-  const chara = detail.chara || currentCharacter();
-  const praise = detail.praise || praiseLine(chara, title, detail.xp || 0).replace(/\s*\+\d+EXP$/, "");
-  $("#rewardKicker").textContent = detail.leveled ? "LEVEL UP!" : "ご褒美獲得";
-  $("#rewardMedal").textContent = detail.leveled ? "👑" : (detail.kind === "dailyTask" ? "✅" : detail.kind === "oneShotTask" ? "🎯" : "✦");
-  $("#rewardTitle").textContent = detail.leveled ? `Lv.${detail.newLevel}になった！` : `${title}できた！`;
-  $("#rewardXP").textContent = `+${detail.xp || 0} EXP`;
-  $("#rewardPraise").textContent = praise;
-  const unlock = $("#rewardUnlock");
-  if(unlock){
-    if(detail.unlocks?.length){
-      unlock.hidden = false;
-      unlock.textContent = `解放：${detail.unlocks.map(u=>`${u.icon}${u.title}`).join(" / ")}`;
-    } else {
-      unlock.hidden = true;
-      unlock.textContent = "";
-    }
-  }
-  pop.hidden = false;
-  pop.classList.remove("show"); void pop.offsetWidth; pop.classList.add("show");
-  burstSparkles(detail.leveled ? 44 : 28);
-  clearTimeout(showRewardPopup.timer);
-  showRewardPopup.timer = setTimeout(()=>hideRewardPopup(), 2600);
-}
-function hideRewardPopup(){
-  const pop=$("#rewardPop"); if(!pop) return;
-  pop.classList.remove("show");
-  setTimeout(()=>{ pop.hidden = true; }, 220);
-}
-function renderTodayStamps(doneCount=0){
-  const stamps=$("#dailyStamps"); if(!stamps) return;
-  const slots = Math.max(5, Math.min(10, doneCount < 5 ? 5 : doneCount + 1));
-  stamps.innerHTML = Array.from({length:slots}, (_,i)=>`<span class="${i<doneCount?"filled":""}">${i<doneCount?"★":"☆"}</span>`).join("");
-}
-
-function ensureReward(){
-  settings.reward = settings.reward || {};
-  settings.reward.xp = Number(settings.reward.xp || 0);
-  settings.reward.level = Number(settings.reward.level || 1);
-  settings.reward.affection = Object.assign({haruka:0, akane:0, masumi:0, hin:0}, settings.reward.affection || {});
-  settings.reward.unlocked = settings.reward.unlocked || [];
-  return settings.reward;
-}
-function xpForWeight(weight){ return weight === "big" ? 15 : weight === "normal" ? 7 : 3; }
-function levelFromXP(xp){ return Math.max(1, Math.floor(Math.sqrt(Math.max(0, xp) / 18)) + 1); }
-function nextLevelXP(level){ return Math.pow(level, 2) * 18; }
-function rewardActionLabel(kind){ return {health:"体調記録",mood:"気分記録",diary:"日記",schedule:"予定追加",dailyTask:"毎日タスク",oneShotTask:"ToDo",dailyBonus:"デイリーボーナス"}[kind] || "行動"; }
-function praiseLine(chara, title, xp){
-  const lines = {
-    haruka:[`${title}できたね、南帆。今の一個、僕はちゃんと見てたよ。+${xp}EXP`,`偉い。小さい行動でも、君が戻ってきた証拠だよ。+${xp}EXP`,`南帆、できた分だけ僕に見せて。ちゃんと褒めるから。+${xp}EXP`],
-    akane:[`${title}完了。やったじゃん姫、今のは普通に偉いわ。+${xp}EXP`,`お、できてる。こういう一個が積もるんだよ、姫。+${xp}EXP`,`はい偉い。サボりがちなやつほど、できたら勝ち。+${xp}EXP`],
-    masumi:[`${title}、できたね。いい子。君の達成、俺に見せて。+${xp}EXP`,`完了。君が自分を少し扱えた記録、俺は好きだよ。+${xp}EXP`,`ほら、ちゃんとできた。俺が見てる前で積み上げて。+${xp}EXP`],
-    hin:[`${title}做得好，南帆小姐。少少都係進步嚟㗎。+${xp}EXP`,`好叻。今日完成咗一件，唔准話自己冇用。+${xp}EXP`,`記低咗，完成咗。南帆小姐，呢個好重要。+${xp}EXP`]
-  };
-  const arr = lines[chara.id] || lines.haruka;
-  return arr[Math.floor(Math.random()*arr.length)];
-}
-async function addReward(kind, xp, note=""){
-  const reward = ensureReward();
-  const chara = currentCharacter();
-  const today = todayISO();
-  const prevLevel = levelFromXP(reward.xp);
-  let finalXP = xp;
-  if(reward.streakLastDate !== today){
-    finalXP += 10;
-    reward.streakLastDate = today;
-    await idbPut("rewardEvents", { id: crypto.randomUUID(), date: today, time: currentTimeHM(), kind:"dailyBonus", xp:10, characterId:chara.id, note:"今日の初回ボーナス", createdAt:new Date().toISOString() });
-  }
-  reward.xp += finalXP;
-  reward.level = levelFromXP(reward.xp);
-  const unlocks = newlyUnlocked(prevLevel, reward.level);
-  if(unlocks.length){
-    const existing = new Set(reward.unlocked || []);
-    unlocks.forEach(u=>existing.add(String(u.level)));
-    reward.unlocked = [...existing];
-  }
-  reward.affection[chara.id] = Number(reward.affection[chara.id] || 0) + Math.max(1, Math.round(finalXP/2));
-  saveSettings();
-  await idbPut("rewardEvents", { id: crypto.randomUUID(), date: today, time: currentTimeHM(), kind, xp:finalXP, characterId:chara.id, note, level: reward.level, unlocks: unlocks.map(u=>u.title), createdAt:new Date().toISOString() });
-  renderRewardUI();
-  if($("#logsPanel")?.classList.contains("active")) await renderRewardHistory();
-  const result = { finalXP, chara, oldLevel: prevLevel, newLevel: reward.level, leveled: reward.level > prevLevel, unlocks, kind, note };
-  setTimeout(()=>showRewardPopup({ xp: finalXP, chara, kind, title: note || rewardActionLabel(kind), newLevel: reward.level, leveled: result.leveled, unlocks }), 80);
-  return result;
-}
-
-function renderRewardUI(){
-  const reward = ensureReward();
-  const level = levelFromXP(reward.xp);
-  reward.level = level;
-  const currentBase = level <= 1 ? 0 : nextLevelXP(level-1);
-  const next = nextLevelXP(level);
-  const pct = Math.max(0, Math.min(100, ((reward.xp - currentBase) / Math.max(1, next-currentBase)) * 100));
-  const levelEl = $("#rewardLevel"); if(levelEl) levelEl.textContent = `Lv.${level} / EXP ${reward.xp}`;
-  const bar = $("#xpBar"); if(bar) bar.style.width = `${pct}%`;
-  const hint = $("#rewardHint"); if(hint) hint.textContent = `次のLvまであと${Math.max(0, next - reward.xp)}EXP。今日はできた分だけ宝箱に入るよ。`;
-  const mini = $("#affectionMini");
-  if(mini){ mini.innerHTML = Object.values(characters).map(ch=>{
-    const v = Number(reward.affection?.[ch.id] || 0);
-    const hearts = Math.min(5, Math.max(0, Math.floor(v/20)));
-    return `<span>${ch.name}<b>${"♡".repeat(hearts) || "·"}</b><small>${v}</small></span>`;
-  }).join(""); }
-  const shelf = $("#rewardShelf");
-  if(shelf){
-    const unlocked = new Set((reward.unlocked || []).map(String));
-    shelf.innerHTML = rewardMilestones.map(m=>{
-      const got = unlocked.has(String(m.level)) || level >= m.level;
-      return `<span class="reward-badge ${got?"got":"locked"}" title="Lv.${m.level} ${escapeHTML(m.desc)}"><i>${m.icon}</i><b>Lv.${m.level}</b><em>${escapeHTML(m.title)}</em></span>`;
-    }).join("");
-  }
-}
-
-async function seedDefaultDailyTasks(){
-  const existing = await idbGetAll("dailyTasks");
-  if(existing.length) return;
-  const defaults = [["歯磨き","身支度","tiny"],["お風呂 / シャワー","体の世話","big"],["薬を飲む","体の世話","tiny"],["着替える","身支度","tiny"],["水分をとる","体の世話","tiny"]];
-  for(const [title, category, weight] of defaults){ await idbPut("dailyTasks", { id: crypto.randomUUID(), title, category, weight, enabled:true, createdAt:new Date().toISOString() }); }
-}
-async function completionMapForToday(){
-  const today = todayISO();
-  const completions = await idbGetAll("taskCompletions");
-  const map = new Map();
-  completions.filter(c=>c.date===today).forEach(c=>map.set(c.taskType+":"+c.taskId, c));
-  return map;
-}
-function taskCardHTML(task, type, done){
-  const xp = xpForWeight(task.weight);
-  const weightLabel = task.weight === "big" ? "えらすぎ" : task.weight === "normal" ? "ふつう" : "ちいさい";
-  return `<article class="task-card ${done?"done":""}"><button type="button" class="task-check" data-task-type="${type}" data-task-id="${task.id}" ${done?"disabled":""}>${done?"✓":"○"}</button><div><strong>${escapeHTML(task.title)}</strong><p>${escapeHTML(task.category||"自由")} / ${weightLabel} / +${xp}EXP</p></div></article>`;
-}
-async function renderTaskPanel(){
-  await seedDefaultDailyTasks();
-  renderRewardUI();
-  const completions = await completionMapForToday();
-  const daily = (await idbGetAll("dailyTasks")).filter(t=>t.enabled !== false);
-  const dailyList = $("#dailyTaskList"); if(dailyList){ dailyList.innerHTML = daily.length ? daily.map(t=>taskCardHTML(t,"daily",completions.has("daily:"+t.id))).join("") : `<p class="hint">毎日タスクはまだないよ。</p>`; }
-  const count = $("#taskTodayCount"); if(count){ const done = daily.filter(t=>completions.has("daily:"+t.id)).length; count.textContent = `${done}/${daily.length}`; }
-  renderTodayStamps([...completions.values()].length);
-  const manage = $("#dailyTaskManageList"); if(manage){ manage.innerHTML = daily.map(t=>`<article class="log-item task-manage"><p><strong>${escapeHTML(t.title)}</strong><br><small>${escapeHTML(t.category)} / ${t.weight}</small></p><button type="button" class="ghost small danger" data-delete-daily="${t.id}">削除</button></article>`).join(""); }
-  const oneShot = (await idbGetAll("oneShotTasks")).filter(t=>t.date===todayISO()).sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));
-  const oneList = $("#oneShotTaskList"); if(oneList){ oneList.innerHTML = oneShot.length ? oneShot.map(t=>taskCardHTML(t,"one",completions.has("one:"+t.id))).join("") : `<p class="hint">今日だけToDoはまだないよ。</p>`; }
-  bindTaskButtons();
-}
-function bindTaskButtons(){ $$(".task-check").forEach(btn=>btn.onclick=()=>completeTask(btn.dataset.taskType, btn.dataset.taskId)); $$("[data-delete-daily]").forEach(btn=>btn.onclick=()=>deleteDailyTask(btn.dataset.deleteDaily)); }
-async function completeTask(type, taskId){
-  const storeName = type === "daily" ? "dailyTasks" : "oneShotTasks";
-  const task = await idbGet(storeName, taskId); if(!task) return;
-  const id = `${todayISO()}::${type}::${taskId}`;
-  const old = await idbGet("taskCompletions", id); if(old){ showToast("もう褒めたやつだよ"); return; }
-  const xp = xpForWeight(task.weight);
-  await idbPut("taskCompletions", { id, date: todayISO(), time: currentTimeHM(), taskType:type, taskId, title: task.title, xp, characterId: settings.characterId, createdAt:new Date().toISOString() });
-  const result = await addReward(type === "daily" ? "dailyTask" : "oneShotTask", xp, task.title);
-  setSpeech(praiseLine(result.chara, task.title, result.finalXP));
-  await renderTaskPanel();
-  showToast(`${task.title}できた！ +${result.finalXP}EXP`);
-}
-async function addDailyTask(event){ event.preventDefault(); const f=event.currentTarget; const d=new FormData(f); await idbPut("dailyTasks", { id: crypto.randomUUID(), title:d.get("title"), category:d.get("category"), weight:d.get("weight"), enabled:true, createdAt:new Date().toISOString() }); f.reset(); await renderTaskPanel(); showToast("毎日タスクに追加したよ"); }
-async function addOneShotTask(event){ event.preventDefault(); const f=event.currentTarget; const d=new FormData(f); await idbPut("oneShotTasks", { id: crypto.randomUUID(), date: todayISO(), title:d.get("title"), category:d.get("category"), weight:d.get("weight"), done:false, createdAt:new Date().toISOString() }); f.reset(); await renderTaskPanel(); showToast("今日のToDoに追加したよ"); }
-async function deleteDailyTask(id){ const task = await idbGet("dailyTasks", id); if(!task) return; task.enabled = false; task.updatedAt = new Date().toISOString(); await idbPut("dailyTasks", task); await renderTaskPanel(); showToast("毎日タスクから外したよ"); }
-async function renderRewardHistory(){
-  const box=$("#rewardHistory"); if(!box) return;
-  const events=(await idbGetAll("rewardEvents")).sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||"")).slice(0,12);
-  const count=$("#rewardLogCount"); if(count) count.textContent=`${events.length}件`;
-  box.innerHTML = events.length ? events.map(e=>`<article class="log-item"><time>${e.date} ${e.time||""}</time><p><strong>+${e.xp}EXP</strong> ${escapeHTML(rewardActionLabel(e.kind))}${e.note?` / ${escapeHTML(e.note)}`:""}</p></article>`).join("") : `<p class="hint">まだご褒美ログがないよ。</p>`;
-}
-async function rewardForRecord(kind, xp, note){ const result = await addReward(kind, xp, note); renderRewardUI(); return result.finalXP; }
-
 function parseDateTimeValue(item){ return `${item.date || "9999-99-99"}T${item.time || "23:59"}`; }
 function jpDateShort(dateStr){
   if(!dateStr) return "日付なし";
@@ -783,7 +644,7 @@ function jpDateShort(dateStr){
   if(Number.isNaN(d.getTime())) return dateStr;
   return new Intl.DateTimeFormat("ja-JP", { month:"numeric", day:"numeric", weekday:"short" }).format(d);
 }
-async function saveSchedule(event){ event.preventDefault(); const f=event.currentTarget; const d=new FormData(f); const item={ id:crypto.randomUUID(), date:d.get("date"), time:d.get("time")||"", category:d.get("category"), title:d.get("title"), memo:d.get("memo")||"", done:false, createdAt:new Date().toISOString() }; await idbPut("schedules", item); await rewardForRecord("schedule", 3, item.title); f.reset(); f.date.value=todayISO(); await renderSchedules(); setSpeech(await todayScheduleSpeechLine()); showToast("予定を保存したよ"); }
+async function saveSchedule(event){ event.preventDefault(); const f=event.currentTarget; const d=new FormData(f); const item={ id:crypto.randomUUID(), date:d.get("date"), time:d.get("time")||"", category:d.get("category"), title:d.get("title"), memo:d.get("memo")||"", done:false, createdAt:new Date().toISOString() }; await idbPut("schedules", item); f.reset(); f.date.value=todayISO(); await renderSchedules(); setSpeech(await todayScheduleSpeechLine()); showToast("予定を保存したよ"); }
 async function renderSchedules(){
   const list=$("#scheduleList");
   const items=(await idbGetAll("schedules")).sort((a,b)=>parseDateTimeValue(a).localeCompare(parseDateTimeValue(b))).slice(0,30);
@@ -817,7 +678,7 @@ async function todayScheduleSpeechLine(){
 }
 async function loadTodayDiary(){ const f=$("#diaryForm"); f.date.value=todayISO(); await loadDiaryByDate(f.date.value); }
 async function loadDiaryByDate(date){ const f=$("#diaryForm"); if(!f) return; f.date.value=date || todayISO(); const d=await idbGet("diaries", f.date.value); if(!d){ f.title.value=""; f.body.value=""; f.tags.value=""; return; } f.title.value=d.title||""; f.body.value=d.body||""; f.tags.value=(d.tags||[]).join(","); }
-async function saveDiary(event){ event.preventDefault(); const f=event.currentTarget; const d=new FormData(f); const item={ date:d.get("date"), title:d.get("title")||"", body:d.get("body")||"", tags:String(d.get("tags")||"").split(",").map(s=>s.trim()).filter(Boolean), updatedAt:new Date().toISOString() }; await idbPut("diaries", item); const xp=await rewardForRecord("diary", 8, item.title || "日記"); await renderDiaries(); renderHome(`${characterLine(currentCharacter(), "diary")}  +${xp}EXP`); showToast("日記を保存したよ"); }
+async function saveDiary(event){ event.preventDefault(); const f=event.currentTarget; const d=new FormData(f); const item={ date:d.get("date"), title:d.get("title")||"", body:d.get("body")||"", tags:String(d.get("tags")||"").split(",").map(s=>s.trim()).filter(Boolean), updatedAt:new Date().toISOString() }; await idbPut("diaries", item); await renderDiaries(); renderHome(characterLine(currentCharacter(), "diary")); showToast("日記を保存したよ"); }
 function monthDays(date=new Date()){
   const y=date.getFullYear(), m=date.getMonth();
   const first=new Date(y,m,1), last=new Date(y,m+1,0);
@@ -931,7 +792,6 @@ function renderLineChart(days, series, {min=0, max=5}={}){
   return `<svg class="chart-svg" viewBox="0 0 ${w} ${h}" role="img" aria-label="ロググラフ">${grid}<line class="chart-axis" x1="${left}" x2="${w-right}" y1="${y(min)}" y2="${y(min)}"/><text class="chart-scale" x="${w-8}" y="${y(max)+4}" text-anchor="end">5</text><text class="chart-scale" x="${w-8}" y="${y(min)-4}" text-anchor="end">0</text>${labels}${lines}</svg>`;
 }
 async function renderLogsPanel(){
-  await renderRewardHistory();
   const days = lastNDays(14);
   const moodLogs = await idbGetAll("moodLogs");
   const healthLogs = await idbGetAll("healthLogs");
@@ -963,7 +823,7 @@ async function renderLogsPanel(){
 }
 
 function renderPickers(){
-  const cp=$("#characterPicker"); if(cp){ cp.innerHTML=""; Object.values(characters).forEach(ch=>{ const b=document.createElement("button"); b.className=`picker-card ${settings.characterId===ch.id?"selected":""}`; b.style.backgroundImage=`linear-gradient(135deg, rgba(0,0,0,.52), rgba(0,0,0,.10)), url("${assetUrl(ch.image)}")`; b.innerHTML=`<span>${ch.name}</span><small>${ch.title}</small>`; b.onclick=()=>{ settings.characterId=ch.id; saveSettings(); renderHome(); renderRewardUI(); renderPickers(); showToast(`${ch.name}に切り替えたよ`); }; cp.appendChild(b); }); }
+  const cp=$("#characterPicker"); if(cp){ cp.innerHTML=""; Object.values(characters).forEach(ch=>{ const b=document.createElement("button"); b.className=`picker-card ${settings.characterId===ch.id?"selected":""}`; b.style.backgroundImage=`linear-gradient(135deg, rgba(0,0,0,.52), rgba(0,0,0,.10)), url("${assetUrl(ch.image)}")`; b.innerHTML=`<span>${ch.name}</span><small>${ch.title}</small>`; b.onclick=()=>{ settings.characterId=ch.id; saveSettings(); renderHome(); renderPickers(); showToast(`${ch.name}に切り替えたよ`); }; cp.appendChild(b); }); }
   const bp=$("#backgroundPicker"); if(bp){ bp.innerHTML=""; Object.values(backgrounds).forEach(bg=>{ const b=document.createElement("button"); b.className=`picker-card room-card ${settings.backgroundId===bg.id?"selected":""}`; b.style.backgroundImage=`linear-gradient(135deg, rgba(0,0,0,.46), rgba(0,0,0,.16)), url("${assetUrl(bg.image)}")`; b.innerHTML=`<span>${bg.name}</span><small>${bg.id}</small>`; b.onclick=()=>{ settings.backgroundId=bg.id; saveSettings(); renderHome(`${bg.name}に移動したよ。`); renderPickers(); showToast(`${bg.name}に切り替えたよ`); }; bp.appendChild(b); }); }
 }
 function loadSettingsForm(){
@@ -977,30 +837,36 @@ function loadSettingsForm(){
   f.rain.value=settings.rain;
   f.weatherMemo.value=settings.weatherMemo;
 }
-function saveSettingsForm(event){
+async function saveSettingsForm(event){
   event.preventDefault();
   const f=event.currentTarget;
+  const previousCity = settings.weatherCity || "";
+  const nextCity = (f.weatherCity?.value || "").trim();
   settings.theme=f.theme.value;
   settings.characterScale=Number(f.characterScale.value);
-  settings.weatherCity=(f.weatherCity?.value || "").trim();
+  settings.weatherCity=nextCity;
   settings.weather=f.weather.value.trim();
   settings.temperature=f.temperature.value.trim();
   settings.rain=f.rain.value.trim();
   settings.weatherMemo=f.weatherMemo.value.trim();
   saveSettings();
   renderHome();
-  showToast("設定を保存したよ");
+  if(nextCity && nextCity !== previousCity){
+    await updateWeatherFromCity(true, nextCity);
+  } else {
+    showToast("設定を保存したよ");
+  }
 }
 
-async function exportData(){ const payload={ exportedAt:new Date().toISOString(), settings, healthLogs:await idbGetAll("healthLogs"), moodLogs:await idbGetAll("moodLogs"), schedules:await idbGetAll("schedules"), diaries:await idbGetAll("diaries"), dailyTasks:await idbGetAll("dailyTasks"), taskCompletions:await idbGetAll("taskCompletions"), oneShotTasks:await idbGetAll("oneShotTasks"), rewardEvents:await idbGetAll("rewardEvents") }; const blob=new Blob([JSON.stringify(payload,null,2)], {type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`infinity-care-backup-${todayISO()}.json`; a.click(); URL.revokeObjectURL(url); }
-async function importData(event){ const file=event.target.files?.[0]; if(!file)return; try{ const p=JSON.parse(await file.text()); if(p.settings){ settings=mergeSettings(defaultSettings,p.settings); saveSettings(); } for(const [key,storeName] of [["healthLogs","healthLogs"],["moodLogs","moodLogs"],["schedules","schedules"],["diaries","diaries"],["dailyTasks","dailyTasks"],["taskCompletions","taskCompletions"],["oneShotTasks","oneShotTasks"],["rewardEvents","rewardEvents"]]){ if(Array.isArray(p[key])){ await idbClear(storeName); for(const item of p[key]){ if(storeName==="healthLogs" && !item.id) item.id=logId("health", item.date || todayISO(), item.time || "00:00"); if(storeName==="moodLogs" && !item.id) item.id=logId("mood", item.date || todayISO(), item.time || "00:00"); await idbPut(storeName,item); } } } renderHome(); renderPickers(); loadSettingsForm(); showToast("バックアップを読み込んだよ"); }catch(e){ console.error(e); showToast("読み込みに失敗したかも"); } }
+async function exportData(){ const payload={ exportedAt:new Date().toISOString(), settings, healthLogs:await idbGetAll("healthLogs"), moodLogs:await idbGetAll("moodLogs"), schedules:await idbGetAll("schedules"), diaries:await idbGetAll("diaries") }; const blob=new Blob([JSON.stringify(payload,null,2)], {type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`infinity-care-backup-${todayISO()}.json`; a.click(); URL.revokeObjectURL(url); }
+async function importData(event){ const file=event.target.files?.[0]; if(!file)return; try{ const p=JSON.parse(await file.text()); if(p.settings){ settings=mergeSettings(defaultSettings,p.settings); saveSettings(); } for(const [key,storeName] of [["healthLogs","healthLogs"],["moodLogs","moodLogs"],["schedules","schedules"],["diaries","diaries"]]){ if(Array.isArray(p[key])){ await idbClear(storeName); for(const item of p[key]){ if(storeName==="healthLogs" && !item.id) item.id=logId("health", item.date || todayISO(), item.time || "00:00"); if(storeName==="moodLogs" && !item.id) item.id=logId("mood", item.date || todayISO(), item.time || "00:00"); await idbPut(storeName,item); } } } renderHome(); renderPickers(); loadSettingsForm(); showToast("バックアップを読み込んだよ"); }catch(e){ console.error(e); showToast("読み込みに失敗したかも"); } }
 
 
 function setActiveNav(panelId){ $$(".bottom-nav button[data-panel]").forEach(btn=>btn.classList.toggle("active", btn.dataset.panel===panelId)); }
 
 async function clearPrototypeCaches(){ if("serviceWorker" in navigator){ try{ const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); }catch{} } if("caches" in window){ try{ const keys=await caches.keys(); await Promise.all(keys.filter(k=>k.startsWith("infinity-care")).map(k=>caches.delete(k))); }catch{} } }
 function bindEvents(){
-  $$(".bottom-nav button[data-panel]").forEach(b=>b.addEventListener("click", async()=>{ setActiveNav(b.dataset.panel); openPanel(b.dataset.panel); if(b.dataset.panel === "schedulePanel"){ await renderTaskPanel(); setSpeech(await todayScheduleSpeechLine()); } else setSpeech(weatherSpeechLine()); }));
+  $$(".bottom-nav button[data-panel]").forEach(b=>b.addEventListener("click", async()=>{ setActiveNav(b.dataset.panel); openPanel(b.dataset.panel); if(b.dataset.panel === "schedulePanel") setSpeech(await todayScheduleSpeechLine()); else setSpeech(weatherSpeechLine()); }));
   $("#openSettings").addEventListener("click",()=>openPanel("settingsPanel"));
   $(".home-stage").addEventListener("click", (e)=>{ if(e.target.closest(".character, .speech-card")) setSpeech(homeTapLine()); });
   $$(".close-panel").forEach(b=>b.addEventListener("click", closePanels));
@@ -1010,10 +876,6 @@ function bindEvents(){
   $("#scheduleForm").addEventListener("submit", saveSchedule);
   $("#diaryForm").addEventListener("submit", saveDiary);
   $("#settingsForm").addEventListener("submit", saveSettingsForm);
-  $("#dailyTaskForm")?.addEventListener("submit", addDailyTask);
-  $("#oneShotTaskForm")?.addEventListener("submit", addOneShotTask);
-  $("#rewardClose")?.addEventListener("click", hideRewardPopup);
-  $("#rewardPop")?.addEventListener("click", (e)=>{ if(e.target.id === "rewardPop") hideRewardPopup(); });
   $("#fetchWeather")?.addEventListener("click", ()=>updateWeatherFromCity(true));
   $("#weatherCard")?.addEventListener("click", ()=>updateWeatherFromCity(true));
   $("#settingsForm").characterScale.addEventListener("input", e=>{ $("#scaleValue").textContent=`${e.target.value}%`; settings.characterScale=Number(e.target.value); applyCharacterScale(); });
@@ -1028,5 +890,5 @@ function bindEvents(){
   $("#diaryForm").date.value=todayISO();
 }
 
-async function init(){ await clearPrototypeCaches(); db=await openDB(); bindEvents(); preloadBackgrounds(); renderHome(); renderRewardUI(); renderPickers(); loadSettingsForm(); syncRangeLabels(document); setActiveNav("moodPanel"); await renderSchedules(); maybeRefreshWeather(); setInterval(updateClock, 30 * 1000); }
+async function init(){ await clearPrototypeCaches(); db=await openDB(); bindEvents(); preloadBackgrounds(); renderHome(); renderPickers(); loadSettingsForm(); syncRangeLabels(document); setActiveNav("moodPanel"); await renderSchedules(); maybeRefreshWeather(); setInterval(updateClock, 30 * 1000); }
 init().catch(e=>{ console.error(e); showToast("初期化に失敗したかも"); });

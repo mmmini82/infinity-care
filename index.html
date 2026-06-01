@@ -8,7 +8,7 @@
 <meta content="yes" name="apple-mobile-web-app-capable"/>
 <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="∞Care" name="apple-mobile-web-app-title"/>
-<title>∞Care prototype - UI aknk v5 position</title>
+<title>∞Care ADHD Reward v1</title>
 <link href="manifest.webmanifest" rel="manifest"/>
 <link href="assets/apple-touch-icon.png" rel="apple-touch-icon"/>
 <link href="assets/favicon-32.png" rel="icon" sizes="32x32" type="image/png"/>
@@ -38,7 +38,7 @@
 <nav aria-label="メインメニュー" class="bottom-nav feature-nav">
 <button data-panel="healthPanel">体調</button>
 <button data-panel="moodPanel">気分</button>
-<button data-panel="schedulePanel">予定</button>
+<button data-panel="schedulePanel">予定<br/>タスク</button>
 <button data-panel="diaryPanel">日記</button>
 <button data-panel="logsPanel">ログ</button>
 <button data-panel="settingsPanel">設定</button>
@@ -158,6 +158,41 @@
 <div aria-hidden="true" class="panel" id="schedulePanel">
 <div class="panel-card feature-panel-card">
 <div class="panel-header"><h2>予定</h2><button class="close-panel">×</button></div>
+<section class="reward-overview">
+  <div>
+    <p class="eyebrow-mini">TODAY REWARD</p>
+    <h3 id="rewardLevel">Lv.1 / EXP 0</h3>
+    <div class="xp-bar"><span id="xpBar"></span></div>
+    <p class="hint" id="rewardHint">できたことは全部、ちゃんと積もるよ。</p>
+  </div>
+  <div class="affection-mini" id="affectionMini"></div>
+</section>
+<section class="task-block">
+  <div class="panel-subheader"><h3>今日の毎日タスク</h3><small id="taskTodayCount">0件</small></div>
+  <p class="hint">お風呂、歯磨き、薬、着替えみたいな“毎日の行動”をここで回収するよ。途切れても減点なし。</p>
+  <div class="daily-task-list" id="dailyTaskList"></div>
+</section>
+<details class="task-editor">
+  <summary>毎日タスクを追加・編集</summary>
+  <form class="form-grid card-form" id="dailyTaskForm">
+    <label class="full">タスク名<input name="title" placeholder="歯磨き、お風呂、薬を飲む、髪を乾かす" required type="text"/></label>
+    <label>カテゴリ<select name="category"><option>身支度</option><option>体の世話</option><option>家事</option><option>仕事</option><option>外出</option><option>休憩</option><option>自由</option></select></label>
+    <label>重さ<select name="weight"><option value="tiny">ちいさい</option><option value="normal">ふつう</option><option value="big">えらすぎ</option></select></label>
+    <button class="primary" type="submit">毎日タスクに追加</button>
+  </form>
+  <div class="list compact-list" id="dailyTaskManageList"></div>
+</details>
+<section class="task-block">
+  <div class="panel-subheader"><h3>今日だけToDo</h3><small>単発</small></div>
+  <form class="form-grid card-form" id="oneShotTaskForm">
+    <label class="full">やること<input name="title" placeholder="メール返す、洗濯する、買い物する" required type="text"/></label>
+    <label>カテゴリ<select name="category"><option>仕事</option><option>家事</option><option>病院</option><option>連絡</option><option>買い物</option><option>遊び</option><option>休憩</option><option>自由</option></select></label>
+    <label>重さ<select name="weight"><option value="tiny">ちいさい</option><option value="normal">ふつう</option><option value="big">えらすぎ</option></select></label>
+    <button class="primary" type="submit">今日のToDoに追加</button>
+  </form>
+  <div class="daily-task-list" id="oneShotTaskList"></div>
+</section>
+
 <form class="form-grid card-form" id="scheduleForm">
 <label>日付<input name="date" required="" type="date"/></label>
 <label>時間<input name="time" type="time"/></label>
@@ -186,6 +221,11 @@
 <div aria-hidden="true" class="panel" id="logsPanel">
 <div class="panel-card feature-panel-card logs-card">
 <div class="panel-header"><h2>ログ</h2><button class="close-panel">×</button></div>
+<section class="chart-card">
+  <div class="panel-subheader"><h3>ご褒美ログ</h3><small id="rewardLogCount">0件</small></div>
+  <div class="reward-history" id="rewardHistory"></div>
+</section>
+
 <p class="hint">最近14日分の気力・不安・体調ゲージをまとめて見る場所。同じ日に複数回記録したら平均で見るよ。</p>
 <section class="chart-card">
 <div class="panel-subheader"><h3>気分ログ</h3><small id="moodChartCount">0件</small></div>

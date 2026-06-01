@@ -1,8 +1,10 @@
-# ∞Care ADHD Reward v1
+# ∞Care ADHD Reward v2
 
-- 毎日タスク（歯磨き・お風呂・薬など）
-- 今日だけToDo
-- 完了でEXP、Lv、キャラ別好感度
-- 記録でもEXP
-- 減点なし、途切れても戻ればOK
-- URL: http://localhost:5224/
+ご褒美感強化版。
+- 達成時ご褒美ポップアップ
+- キラキラ演出
+- レベルアップ演出
+- 解放バッジ棚
+- 今日の達成スタンプ
+- EXPバー強化
+- URL: http://localhost:5226/

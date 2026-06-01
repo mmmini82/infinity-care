@@ -8,7 +8,7 @@
 <meta content="yes" name="apple-mobile-web-app-capable"/>
 <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="∞Care" name="apple-mobile-web-app-title"/>
-<title>∞Care ADHD Reward v1</title>
+<title>∞Care ADHD Reward v2</title>
 <link href="manifest.webmanifest" rel="manifest"/>
 <link href="assets/apple-touch-icon.png" rel="apple-touch-icon"/>
 <link href="assets/favicon-32.png" rel="icon" sizes="32x32" type="image/png"/>
@@ -164,8 +164,10 @@
     <h3 id="rewardLevel">Lv.1 / EXP 0</h3>
     <div class="xp-bar"><span id="xpBar"></span></div>
     <p class="hint" id="rewardHint">できたことは全部、ちゃんと積もるよ。</p>
+    <div class="daily-stamps" id="dailyStamps" aria-label="今日の達成スタンプ"></div>
   </div>
   <div class="affection-mini" id="affectionMini"></div>
+  <div class="reward-shelf" id="rewardShelf"></div>
 </section>
 <section class="task-block">
   <div class="panel-subheader"><h3>今日の毎日タスク</h3><small id="taskTodayCount">0件</small></div>
@@ -273,6 +275,19 @@
 <div class="button-row"><button id="exportData" type="button">JSON書き出し</button><label class="file-label">読み込み<input accept="application/json" id="importData" type="file"/></label></div>
 </div>
 </div>
+
+<div class="reward-pop" id="rewardPop" hidden>
+  <div class="reward-pop-card">
+    <button class="reward-close" id="rewardClose" type="button" aria-label="閉じる">×</button>
+    <p class="reward-kicker" id="rewardKicker">ご褒美獲得</p>
+    <div class="reward-medal" id="rewardMedal">✦</div>
+    <h2 id="rewardTitle">できた！</h2>
+    <p class="reward-xp" id="rewardXP">+0 EXP</p>
+    <p class="reward-praise" id="rewardPraise">ちゃんと見てたよ。</p>
+    <p class="reward-unlock" id="rewardUnlock" hidden></p>
+  </div>
+</div>
+<div class="sparkle-layer" id="sparkleLayer" aria-hidden="true"></div>
 <div aria-live="polite" class="toast" id="toast" role="status"></div>
 <script src="app.js" type="module"></script>
 </body>

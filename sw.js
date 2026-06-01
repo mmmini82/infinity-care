@@ -1,4 +1,4 @@
-const CACHE_NAME = "infinity-care-adhd-reward-v1";
+const CACHE_NAME = "infinity-care-adhd-reward-v2-gohoubi";
 const ASSETS = [
   "./",
   "./index.html",

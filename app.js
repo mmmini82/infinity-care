@@ -1,4 +1,4 @@
-const BUILD_VERSION = "adhd-reward-v1-20260601";
+const BUILD_VERSION = "adhd-reward-v2-gohoubi-20260601";
 const SETTINGS_KEY = "infinityCare.moodLog.settings";
 const DB_NAME = "infinity-care-db-mood-log-v3";
 
@@ -577,6 +577,73 @@ ${log.reasonMemo ? `・きっかけメモ：${log.reasonMemo}
 async function copySupportPrompt(){ updateSupportPrompt(); try { await navigator.clipboard.writeText($("#supportPrompt").value); showToast("文章をコピーしたよ"); renderHome(characterLine(currentCharacter(), "tired")); } catch { showToast("コピーに失敗したかも。長押しでコピーしてね"); } }
 
 
+
+const rewardMilestones = [
+  { level: 2, title: "褒め台詞+", icon: "💬", desc: "褒められる準備、できてきたね" },
+  { level: 3, title: "夜の見守り", icon: "🌙", desc: "夜のセリフが少し濃くなる" },
+  { level: 5, title: "部屋セリフ+", icon: "🏠", desc: "居場所の反応が増える" },
+  { level: 8, title: "おかえり台詞", icon: "🔑", desc: "戻ってきた時の特別反応" },
+  { level: 10, title: "背景解放券", icon: "🖼️", desc: "新しい場所を増やす準備" },
+  { level: 15, title: "衣装差分券", icon: "👗", desc: "衣装追加のご褒美枠" },
+  { level: 20, title: "特別な約束", icon: "💍", desc: "かなり偉い領域" }
+];
+function newlyUnlocked(prevLevel, newLevel){
+  return rewardMilestones.filter(m => prevLevel < m.level && newLevel >= m.level);
+}
+function burstSparkles(count=28){
+  const layer = $("#sparkleLayer");
+  if(!layer) return;
+  layer.innerHTML = "";
+  for(let i=0;i<count;i++){
+    const s=document.createElement("span");
+    s.textContent = ["✦","♡","✧","+EXP","＊"][Math.floor(Math.random()*5)];
+    s.style.left = `${12 + Math.random()*76}%`;
+    s.style.top = `${18 + Math.random()*58}%`;
+    s.style.setProperty("--dx", `${(Math.random()*160)-80}px`);
+    s.style.setProperty("--dy", `${-40 - Math.random()*130}px`);
+    s.style.animationDelay = `${Math.random()*0.12}s`;
+    layer.appendChild(s);
+  }
+  layer.classList.add("active");
+  setTimeout(()=>{ layer.classList.remove("active"); layer.innerHTML=""; }, 1250);
+}
+function showRewardPopup(detail){
+  const pop=$("#rewardPop"); if(!pop) return;
+  const title = detail.title || rewardActionLabel(detail.kind);
+  const chara = detail.chara || currentCharacter();
+  const praise = detail.praise || praiseLine(chara, title, detail.xp || 0).replace(/\s*\+\d+EXP$/, "");
+  $("#rewardKicker").textContent = detail.leveled ? "LEVEL UP!" : "ご褒美獲得";
+  $("#rewardMedal").textContent = detail.leveled ? "👑" : (detail.kind === "dailyTask" ? "✅" : detail.kind === "oneShotTask" ? "🎯" : "✦");
+  $("#rewardTitle").textContent = detail.leveled ? `Lv.${detail.newLevel}になった！` : `${title}できた！`;
+  $("#rewardXP").textContent = `+${detail.xp || 0} EXP`;
+  $("#rewardPraise").textContent = praise;
+  const unlock = $("#rewardUnlock");
+  if(unlock){
+    if(detail.unlocks?.length){
+      unlock.hidden = false;
+      unlock.textContent = `解放：${detail.unlocks.map(u=>`${u.icon}${u.title}`).join(" / ")}`;
+    } else {
+      unlock.hidden = true;
+      unlock.textContent = "";
+    }
+  }
+  pop.hidden = false;
+  pop.classList.remove("show"); void pop.offsetWidth; pop.classList.add("show");
+  burstSparkles(detail.leveled ? 44 : 28);
+  clearTimeout(showRewardPopup.timer);
+  showRewardPopup.timer = setTimeout(()=>hideRewardPopup(), 2600);
+}
+function hideRewardPopup(){
+  const pop=$("#rewardPop"); if(!pop) return;
+  pop.classList.remove("show");
+  setTimeout(()=>{ pop.hidden = true; }, 220);
+}
+function renderTodayStamps(doneCount=0){
+  const stamps=$("#dailyStamps"); if(!stamps) return;
+  const slots = Math.max(5, Math.min(10, doneCount < 5 ? 5 : doneCount + 1));
+  stamps.innerHTML = Array.from({length:slots}, (_,i)=>`<span class="${i<doneCount?"filled":""}">${i<doneCount?"★":"☆"}</span>`).join("");
+}
+
 function ensureReward(){
   settings.reward = settings.reward || {};
   settings.reward.xp = Number(settings.reward.xp || 0);
@@ -603,6 +670,7 @@ async function addReward(kind, xp, note=""){
   const reward = ensureReward();
   const chara = currentCharacter();
   const today = todayISO();
+  const prevLevel = levelFromXP(reward.xp);
   let finalXP = xp;
   if(reward.streakLastDate !== today){
     finalXP += 10;
@@ -611,13 +679,22 @@ async function addReward(kind, xp, note=""){
   }
   reward.xp += finalXP;
   reward.level = levelFromXP(reward.xp);
+  const unlocks = newlyUnlocked(prevLevel, reward.level);
+  if(unlocks.length){
+    const existing = new Set(reward.unlocked || []);
+    unlocks.forEach(u=>existing.add(String(u.level)));
+    reward.unlocked = [...existing];
+  }
   reward.affection[chara.id] = Number(reward.affection[chara.id] || 0) + Math.max(1, Math.round(finalXP/2));
   saveSettings();
-  await idbPut("rewardEvents", { id: crypto.randomUUID(), date: today, time: currentTimeHM(), kind, xp:finalXP, characterId:chara.id, note, createdAt:new Date().toISOString() });
+  await idbPut("rewardEvents", { id: crypto.randomUUID(), date: today, time: currentTimeHM(), kind, xp:finalXP, characterId:chara.id, note, level: reward.level, unlocks: unlocks.map(u=>u.title), createdAt:new Date().toISOString() });
   renderRewardUI();
   if($("#logsPanel")?.classList.contains("active")) await renderRewardHistory();
-  return { finalXP, chara };
+  const result = { finalXP, chara, oldLevel: prevLevel, newLevel: reward.level, leveled: reward.level > prevLevel, unlocks, kind, note };
+  setTimeout(()=>showRewardPopup({ xp: finalXP, chara, kind, title: note || rewardActionLabel(kind), newLevel: reward.level, leveled: result.leveled, unlocks }), 80);
+  return result;
 }
+
 function renderRewardUI(){
   const reward = ensureReward();
   const level = levelFromXP(reward.xp);
@@ -627,10 +704,23 @@ function renderRewardUI(){
   const pct = Math.max(0, Math.min(100, ((reward.xp - currentBase) / Math.max(1, next-currentBase)) * 100));
   const levelEl = $("#rewardLevel"); if(levelEl) levelEl.textContent = `Lv.${level} / EXP ${reward.xp}`;
   const bar = $("#xpBar"); if(bar) bar.style.width = `${pct}%`;
-  const hint = $("#rewardHint"); if(hint) hint.textContent = `次のLvまであと${Math.max(0, next - reward.xp)}EXP。途切れても減らないよ。`;
+  const hint = $("#rewardHint"); if(hint) hint.textContent = `次のLvまであと${Math.max(0, next - reward.xp)}EXP。今日はできた分だけ宝箱に入るよ。`;
   const mini = $("#affectionMini");
-  if(mini){ mini.innerHTML = Object.values(characters).map(ch=>`<span>${ch.name}<b>${Number(reward.affection?.[ch.id] || 0)}</b></span>`).join(""); }
+  if(mini){ mini.innerHTML = Object.values(characters).map(ch=>{
+    const v = Number(reward.affection?.[ch.id] || 0);
+    const hearts = Math.min(5, Math.max(0, Math.floor(v/20)));
+    return `<span>${ch.name}<b>${"♡".repeat(hearts) || "·"}</b><small>${v}</small></span>`;
+  }).join(""); }
+  const shelf = $("#rewardShelf");
+  if(shelf){
+    const unlocked = new Set((reward.unlocked || []).map(String));
+    shelf.innerHTML = rewardMilestones.map(m=>{
+      const got = unlocked.has(String(m.level)) || level >= m.level;
+      return `<span class="reward-badge ${got?"got":"locked"}" title="Lv.${m.level} ${escapeHTML(m.desc)}"><i>${m.icon}</i><b>Lv.${m.level}</b><em>${escapeHTML(m.title)}</em></span>`;
+    }).join("");
+  }
 }
+
 async function seedDefaultDailyTasks(){
   const existing = await idbGetAll("dailyTasks");
   if(existing.length) return;
@@ -656,6 +746,7 @@ async function renderTaskPanel(){
   const daily = (await idbGetAll("dailyTasks")).filter(t=>t.enabled !== false);
   const dailyList = $("#dailyTaskList"); if(dailyList){ dailyList.innerHTML = daily.length ? daily.map(t=>taskCardHTML(t,"daily",completions.has("daily:"+t.id))).join("") : `<p class="hint">毎日タスクはまだないよ。</p>`; }
   const count = $("#taskTodayCount"); if(count){ const done = daily.filter(t=>completions.has("daily:"+t.id)).length; count.textContent = `${done}/${daily.length}`; }
+  renderTodayStamps([...completions.values()].length);
   const manage = $("#dailyTaskManageList"); if(manage){ manage.innerHTML = daily.map(t=>`<article class="log-item task-manage"><p><strong>${escapeHTML(t.title)}</strong><br><small>${escapeHTML(t.category)} / ${t.weight}</small></p><button type="button" class="ghost small danger" data-delete-daily="${t.id}">削除</button></article>`).join(""); }
   const oneShot = (await idbGetAll("oneShotTasks")).filter(t=>t.date===todayISO()).sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));
   const oneList = $("#oneShotTaskList"); if(oneList){ oneList.innerHTML = oneShot.length ? oneShot.map(t=>taskCardHTML(t,"one",completions.has("one:"+t.id))).join("") : `<p class="hint">今日だけToDoはまだないよ。</p>`; }
@@ -921,6 +1012,8 @@ function bindEvents(){
   $("#settingsForm").addEventListener("submit", saveSettingsForm);
   $("#dailyTaskForm")?.addEventListener("submit", addDailyTask);
   $("#oneShotTaskForm")?.addEventListener("submit", addOneShotTask);
+  $("#rewardClose")?.addEventListener("click", hideRewardPopup);
+  $("#rewardPop")?.addEventListener("click", (e)=>{ if(e.target.id === "rewardPop") hideRewardPopup(); });
   $("#fetchWeather")?.addEventListener("click", ()=>updateWeatherFromCity(true));
   $("#weatherCard")?.addEventListener("click", ()=>updateWeatherFromCity(true));
   $("#settingsForm").characterScale.addEventListener("input", e=>{ $("#scaleValue").textContent=`${e.target.value}%`; settings.characterScale=Number(e.target.value); applyCharacterScale(); });

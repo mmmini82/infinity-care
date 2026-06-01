@@ -1,4 +1,4 @@
-const BUILD_VERSION = "ui-aknk-v7-weatherfix-20260601-1";
+const BUILD_VERSION = "ui-aknk-v8-life-todo-20260601-1";
 const SETTINGS_KEY = "infinityCare.moodLog.settings";
 const DB_NAME = "infinity-care-db-mood-log-v3";
 
@@ -510,13 +510,16 @@ function showToast(message){ const t=$("#toast"); t.textContent=message; t.class
 
 async function openDB(){
   return new Promise((resolve,reject)=>{
-    const req = indexedDB.open(DB_NAME, 1);
+    const req = indexedDB.open(DB_NAME, 2);
     req.onupgradeneeded = () => {
       const d = req.result;
       if(!d.objectStoreNames.contains("healthLogs")) d.createObjectStore("healthLogs", { keyPath:"id" });
       if(!d.objectStoreNames.contains("moodLogs")) d.createObjectStore("moodLogs", { keyPath:"id" });
       if(!d.objectStoreNames.contains("schedules")) d.createObjectStore("schedules", { keyPath:"id" });
       if(!d.objectStoreNames.contains("diaries")) d.createObjectStore("diaries", { keyPath:"date" });
+      if(!d.objectStoreNames.contains("todos")) d.createObjectStore("todos", { keyPath:"id" });
+      if(!d.objectStoreNames.contains("mealLogs")) d.createObjectStore("mealLogs", { keyPath:"id" });
+      if(!d.objectStoreNames.contains("exerciseLogs")) d.createObjectStore("exerciseLogs", { keyPath:"id" });
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -527,12 +530,13 @@ function idbGet(name, key){ return new Promise((res,rej)=>{ const r=store(name).
 function idbGetAll(name){ return new Promise((res,rej)=>{ const r=store(name).getAll(); r.onsuccess=()=>res(r.result || []); r.onerror=()=>rej(r.error); }); }
 function idbPut(name, value){ return new Promise((res,rej)=>{ const r=store(name,"readwrite").put(value); r.onsuccess=()=>res(value); r.onerror=()=>rej(r.error); }); }
 function idbClear(name){ return new Promise((res,rej)=>{ const r=store(name,"readwrite").clear(); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
+function idbDelete(name, key){ return new Promise((res,rej)=>{ const r=store(name,"readwrite").delete(key); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
 
 function openPanel(id){
   const panel = document.getElementById(id); if(!panel) return;
-  if(id === "healthPanel") { loadTodayHealth(); renderHealthMiniList(); }
+  if(id === "healthPanel") { loadTodayHealth(); loadLifeForms(); renderHealthMiniList(); renderLifeMiniLists(); }
   if(id === "moodPanel") { loadTodayMood(); renderMoodMiniList(); updateSupportPrompt(); }
-  if(id === "schedulePanel") renderSchedules();
+  if(id === "schedulePanel") { renderSchedules(); renderTodos(); renderXpSummary(); }
   if(id === "diaryPanel") { loadTodayDiary(); renderDiaries(); }
   if(id === "logsPanel") { renderLogsPanel(); }
   if(id === "settingsPanel") { renderPickers(); loadSettingsForm(); renderHome(characterLine(currentCharacter(), "settings")); }
@@ -644,6 +648,109 @@ function jpDateShort(dateStr){
   if(Number.isNaN(d.getTime())) return dateStr;
   return new Intl.DateTimeFormat("ja-JP", { month:"numeric", day:"numeric", weekday:"short" }).format(d);
 }
+
+function setFormDateTime(form){
+  if(!form) return;
+  if(form.date && !form.date.value) form.date.value = todayISO();
+  if(form.time && !form.time.value) form.time.value = currentTimeHM();
+}
+function loadLifeForms(){
+  setFormDateTime($("#mealForm"));
+  setFormDateTime($("#exerciseForm"));
+}
+function mealSummary(log){
+  return `${log.mealType || "ご飯"}：${log.mealText || ""}${log.memo ? ` / ${log.memo}` : ""}`;
+}
+function exerciseSummary(log){
+  const min = log.minutes ? `${log.minutes}分` : "分数未入力";
+  return `${log.exerciseType || "活動"} ${min}（${log.intensity || "強さ未入力"}）${log.memo ? ` / ${log.memo}` : ""}`;
+}
+async function saveMeal(event){
+  event.preventDefault();
+  const f=event.currentTarget; const d=new FormData(f);
+  const date=d.get("date") || todayISO();
+  const time=d.get("time") || currentTimeHM();
+  const item={ id:logId("meal", date, time)+"-"+crypto.randomUUID().slice(0,6), date, time, mealType:d.get("mealType"), mealText:d.get("mealText"), memo:d.get("memo")||"", xp:5, updatedAt:new Date().toISOString() };
+  await idbPut("mealLogs", item);
+  f.reset(); f.date.value=todayISO(); f.time.value=currentTimeHM();
+  await renderLifeMiniLists(); await renderXpSummary();
+  setSpeech(`${currentCharacter().name}が、ご飯の記録を受け取ったよ。食べたこと、ちゃんと残せた。`);
+  showToast("ご飯を保存したよ");
+}
+async function saveExercise(event){
+  event.preventDefault();
+  const f=event.currentTarget; const d=new FormData(f);
+  const date=d.get("date") || todayISO();
+  const time=d.get("time") || currentTimeHM();
+  const minutes = d.get("minutes") ? Number(d.get("minutes")) : 0;
+  const item={ id:logId("exercise", date, time)+"-"+crypto.randomUUID().slice(0,6), date, time, exerciseType:d.get("exerciseType"), minutes, intensity:d.get("intensity"), memo:d.get("memo")||"", xp:Math.max(5, Math.min(60, Math.round(minutes || 5))), updatedAt:new Date().toISOString() };
+  await idbPut("exerciseLogs", item);
+  f.reset(); f.date.value=todayISO(); f.time.value=currentTimeHM();
+  await renderLifeMiniLists(); await renderXpSummary();
+  setSpeech(`${currentCharacter().name}が、今日の活動を記録したよ。動いた分も、ちゃんと経験値。`);
+  showToast("運動を保存したよ");
+}
+async function renderLifeMiniLists(){
+  const mealList=$("#mealMiniList");
+  const exerciseList=$("#exerciseMiniList");
+  if(mealList){
+    const logs=(await idbGetAll("mealLogs")).sort((a,b)=>logSortKey(b).localeCompare(logSortKey(a))).slice(0,5);
+    mealList.innerHTML = logs.length ? logs.map(l=>`<article class="log-item"><time>${l.date} ${l.time||""}</time><p>${escapeHTML(mealSummary(l))}</p></article>`).join("") : `<p class="hint">まだご飯ログがないよ。</p>`;
+  }
+  if(exerciseList){
+    const logs=(await idbGetAll("exerciseLogs")).sort((a,b)=>logSortKey(b).localeCompare(logSortKey(a))).slice(0,5);
+    exerciseList.innerHTML = logs.length ? logs.map(l=>`<article class="log-item"><time>${l.date} ${l.time||""}</time><p>${escapeHTML(exerciseSummary(l))}</p></article>`).join("") : `<p class="hint">まだ運動ログがないよ。</p>`;
+  }
+}
+async function saveTodo(event){
+  event.preventDefault();
+  const f=event.currentTarget; const d=new FormData(f);
+  const date=d.get("date") || todayISO();
+  const time=d.get("time") || "";
+  const item={ id:crypto.randomUUID(), date, time, category:d.get("category"), title:d.get("title"), xp:Number(d.get("xp")||10), done:false, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString() };
+  await idbPut("todos", item);
+  f.reset(); f.date.value=todayISO();
+  await renderTodos(); await renderXpSummary();
+  showToast("ToDoを追加したよ");
+}
+async function toggleTodo(id){
+  const item=await idbGet("todos", id);
+  if(!item) return;
+  item.done=!item.done;
+  item.updatedAt=new Date().toISOString();
+  await idbPut("todos", item);
+  await renderTodos(); await renderXpSummary();
+  setSpeech(item.done ? `ToDo完了。${item.xp || 10}XP入ったよ、ちゃんと進んでる。` : `ToDoを未完了に戻したよ。やり直せる形にしておこう。`);
+}
+async function deleteTodo(id){
+  await idbDelete("todos", id);
+  await renderTodos(); await renderXpSummary();
+  showToast("ToDoを消したよ");
+}
+async function renderTodos(){
+  const list=$("#todoList"); if(!list) return;
+  const items=(await idbGetAll("todos")).sort((a,b)=>parseDateTimeValue(a).localeCompare(parseDateTimeValue(b))).slice(0,40);
+  list.innerHTML = items.length ? items.map(t=>`<article class="schedule-item todo-item ${t.done?"done":""}"><div class="todo-date"><time>${jpDateShort(t.date)} ${t.time||"時間未定"}</time><span>${escapeHTML(t.category || "ToDo")} / ${Number(t.xp||10)}XP</span></div><p><strong>${escapeHTML(t.title)}</strong></p><div class="todo-actions"><button type="button" data-todo-toggle="${t.id}">${t.done?"未完了に戻す":"完了"}</button><button type="button" data-todo-delete="${t.id}">削除</button></div></article>`).join("") : `<p class="hint">ToDoはまだないよ。</p>`;
+  list.querySelectorAll("[data-todo-toggle]").forEach(b=>b.addEventListener("click",()=>toggleTodo(b.dataset.todoToggle)));
+  list.querySelectorAll("[data-todo-delete]").forEach(b=>b.addEventListener("click",()=>deleteTodo(b.dataset.todoDelete)));
+}
+async function calculateXp(){
+  const todos=await idbGetAll("todos");
+  const meals=await idbGetAll("mealLogs");
+  const exercises=await idbGetAll("exerciseLogs");
+  const todoXp=todos.filter(t=>t.done).reduce((s,t)=>s+Number(t.xp||10),0);
+  const mealXp=meals.reduce((s,m)=>s+Number(m.xp||5),0);
+  const exerciseXp=exercises.reduce((s,e)=>s+Number(e.xp||0),0);
+  return { total: todoXp + mealXp + exerciseXp, todoXp, mealXp, exerciseXp, doneTodos: todos.filter(t=>t.done).length, meals: meals.length, exercises: exercises.length };
+}
+async function renderXpSummary(){
+  const box=$("#xpSummary"); if(!box) return;
+  const xp=await calculateXp();
+  const level=Math.floor(xp.total/100)+1;
+  const progress=xp.total%100;
+  box.innerHTML = `<span>Lv.${level}</span><strong>${xp.total} XP</strong><small>ToDo ${xp.doneTodos}件 / ご飯 ${xp.meals}件 / 運動 ${xp.exercises}件</small><div class="xp-bar"><i style="width:${progress}%"></i></div>`;
+}
+
 async function saveSchedule(event){ event.preventDefault(); const f=event.currentTarget; const d=new FormData(f); const item={ id:crypto.randomUUID(), date:d.get("date"), time:d.get("time")||"", category:d.get("category"), title:d.get("title"), memo:d.get("memo")||"", done:false, createdAt:new Date().toISOString() }; await idbPut("schedules", item); f.reset(); f.date.value=todayISO(); await renderSchedules(); setSpeech(await todayScheduleSpeechLine()); showToast("予定を保存したよ"); }
 async function renderSchedules(){
   const list=$("#scheduleList");
@@ -858,8 +965,8 @@ async function saveSettingsForm(event){
   }
 }
 
-async function exportData(){ const payload={ exportedAt:new Date().toISOString(), settings, healthLogs:await idbGetAll("healthLogs"), moodLogs:await idbGetAll("moodLogs"), schedules:await idbGetAll("schedules"), diaries:await idbGetAll("diaries") }; const blob=new Blob([JSON.stringify(payload,null,2)], {type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`infinity-care-backup-${todayISO()}.json`; a.click(); URL.revokeObjectURL(url); }
-async function importData(event){ const file=event.target.files?.[0]; if(!file)return; try{ const p=JSON.parse(await file.text()); if(p.settings){ settings=mergeSettings(defaultSettings,p.settings); saveSettings(); } for(const [key,storeName] of [["healthLogs","healthLogs"],["moodLogs","moodLogs"],["schedules","schedules"],["diaries","diaries"]]){ if(Array.isArray(p[key])){ await idbClear(storeName); for(const item of p[key]){ if(storeName==="healthLogs" && !item.id) item.id=logId("health", item.date || todayISO(), item.time || "00:00"); if(storeName==="moodLogs" && !item.id) item.id=logId("mood", item.date || todayISO(), item.time || "00:00"); await idbPut(storeName,item); } } } renderHome(); renderPickers(); loadSettingsForm(); showToast("バックアップを読み込んだよ"); }catch(e){ console.error(e); showToast("読み込みに失敗したかも"); } }
+async function exportData(){ const payload={ exportedAt:new Date().toISOString(), settings, healthLogs:await idbGetAll("healthLogs"), moodLogs:await idbGetAll("moodLogs"), schedules:await idbGetAll("schedules"), diaries:await idbGetAll("diaries"), todos:await idbGetAll("todos"), mealLogs:await idbGetAll("mealLogs"), exerciseLogs:await idbGetAll("exerciseLogs") }; const blob=new Blob([JSON.stringify(payload,null,2)], {type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`infinity-care-backup-${todayISO()}.json`; a.click(); URL.revokeObjectURL(url); }
+async function importData(event){ const file=event.target.files?.[0]; if(!file)return; try{ const p=JSON.parse(await file.text()); if(p.settings){ settings=mergeSettings(defaultSettings,p.settings); saveSettings(); } for(const [key,storeName] of [["healthLogs","healthLogs"],["moodLogs","moodLogs"],["schedules","schedules"],["diaries","diaries"],["todos","todos"],["mealLogs","mealLogs"],["exerciseLogs","exerciseLogs"]]){ if(Array.isArray(p[key])){ await idbClear(storeName); for(const item of p[key]){ if(storeName==="healthLogs" && !item.id) item.id=logId("health", item.date || todayISO(), item.time || "00:00"); if(storeName==="moodLogs" && !item.id) item.id=logId("mood", item.date || todayISO(), item.time || "00:00"); await idbPut(storeName,item); } } } renderHome(); renderPickers(); loadSettingsForm(); showToast("バックアップを読み込んだよ"); }catch(e){ console.error(e); showToast("読み込みに失敗したかも"); } }
 
 
 function setActiveNav(panelId){ $$(".bottom-nav button[data-panel]").forEach(btn=>btn.classList.toggle("active", btn.dataset.panel===panelId)); }
@@ -874,6 +981,9 @@ function bindEvents(){
   $("#healthForm").addEventListener("submit", saveHealth);
   $("#moodForm").addEventListener("submit", saveMood);
   $("#scheduleForm").addEventListener("submit", saveSchedule);
+  $("#todoForm")?.addEventListener("submit", saveTodo);
+  $("#mealForm")?.addEventListener("submit", saveMeal);
+  $("#exerciseForm")?.addEventListener("submit", saveExercise);
   $("#diaryForm").addEventListener("submit", saveDiary);
   $("#settingsForm").addEventListener("submit", saveSettingsForm);
   $("#fetchWeather")?.addEventListener("click", ()=>updateWeatherFromCity(true));
@@ -885,10 +995,13 @@ function bindEvents(){
   $("#copySupportPrompt").addEventListener("click", copySupportPrompt);
   $("#openChatGPT").addEventListener("click", async()=>{ await copySupportPrompt(); window.open("https://chatgpt.com/", "_blank", "noopener"); });
   $("#scheduleForm").date.value=todayISO();
+  if($("#todoForm")) $("#todoForm").date.value=todayISO();
+  if($("#mealForm")) { $("#mealForm").date.value=todayISO(); $("#mealForm").time.value=currentTimeHM(); }
+  if($("#exerciseForm")) { $("#exerciseForm").date.value=todayISO(); $("#exerciseForm").time.value=currentTimeHM(); }
   $("#healthForm").date.value=todayISO(); if($("#healthForm").time) $("#healthForm").time.value=currentTimeHM();
   $("#moodForm").date.value=todayISO(); if($("#moodForm").time) $("#moodForm").time.value=currentTimeHM();
   $("#diaryForm").date.value=todayISO();
 }
 
-async function init(){ await clearPrototypeCaches(); db=await openDB(); bindEvents(); preloadBackgrounds(); renderHome(); renderPickers(); loadSettingsForm(); syncRangeLabels(document); setActiveNav("moodPanel"); await renderSchedules(); maybeRefreshWeather(); setInterval(updateClock, 30 * 1000); }
+async function init(){ await clearPrototypeCaches(); db=await openDB(); bindEvents(); preloadBackgrounds(); renderHome(); renderPickers(); loadSettingsForm(); syncRangeLabels(document); setActiveNav("moodPanel"); await renderSchedules(); await renderTodos(); await renderXpSummary(); maybeRefreshWeather(); setInterval(updateClock, 30 * 1000); }
 init().catch(e=>{ console.error(e); showToast("初期化に失敗したかも"); });

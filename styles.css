@@ -1660,3 +1660,77 @@ body::before {
     min-height: -webkit-fill-available !important;
   }
 }
+
+
+/* ui-aknk v8: ToDo/XP + meal/exercise log cards */
+.life-section,
+.todo-xp-section {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+.compact-form {
+  gap: 8px;
+}
+.xp-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(var(--accent-rgb),.28), transparent 42%),
+    linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+  border: 1px solid rgba(255,255,255,.16);
+  box-shadow: 0 14px 30px rgba(0,0,0,.22);
+}
+.xp-card span {
+  color: rgba(255,255,255,.72);
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.xp-card strong {
+  font-size: 26px;
+  line-height: 1;
+}
+.xp-card small {
+  color: rgba(255,255,255,.68);
+}
+.xp-bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255,255,255,.13);
+}
+.xp-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(var(--accent-rgb),.95), rgba(var(--accent-2-rgb),.95));
+}
+.todo-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.todo-actions button {
+  min-height: 34px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.10);
+}
+.todo-item.done {
+  opacity: .62;
+}
+.todo-item.done strong {
+  text-decoration: line-through;
+}
+.bottom-nav button br {
+  display: none;
+}
+@media (max-width: 390px) {
+  .bottom-nav button br { display: block; }
+}

@@ -8,7 +8,7 @@
 <meta content="yes" name="apple-mobile-web-app-capable"/>
 <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="∞Care" name="apple-mobile-web-app-title"/>
-<title>∞Care prototype - UI aknk v7 weatherfix</title>
+<title>∞Care prototype - UI aknk v8 life todo</title>
 <link href="manifest.webmanifest" rel="manifest"/>
 <link href="assets/apple-touch-icon.png" rel="apple-touch-icon"/>
 <link href="assets/favicon-32.png" rel="icon" sizes="32x32" type="image/png"/>
@@ -38,7 +38,7 @@
 <nav aria-label="メインメニュー" class="bottom-nav feature-nav">
 <button data-panel="healthPanel">体調</button>
 <button data-panel="moodPanel">気分</button>
-<button data-panel="schedulePanel">予定</button>
+<button data-panel="schedulePanel">予定<br/>タスク</button>
 <button data-panel="diaryPanel">日記</button>
 <button data-panel="logsPanel">ログ</button>
 <button data-panel="settingsPanel">設定</button>
@@ -91,6 +91,31 @@
 <button class="primary" type="submit">体調を保存</button>
 </form>
 <div class="mini-list-block"><h3>最近の体調</h3><div class="list compact-list" id="healthMiniList"></div></div>
+<section class="life-section">
+  <div class="panel-subheader"><h3>ご飯の記録</h3><small>食べた・飲んだを残す</small></div>
+  <form class="form-grid card-form compact-form" id="mealForm">
+    <label>日付<input name="date" required="" type="date"/></label>
+    <label>時間<input name="time" type="time"/></label>
+    <label>区分<select name="mealType"><option>朝</option><option>昼</option><option>夜</option><option>間食</option><option>水分</option><option>薬と一緒</option><option>その他</option></select></label>
+    <label class="full">内容<input name="mealText" placeholder="おにぎり、緑茶、海鮮、食べられなかった等" required="" type="text"/></label>
+    <label class="full">メモ<textarea name="memo" rows="2" placeholder="量、気持ち悪さ、辛さ、食欲など"></textarea></label>
+    <button class="primary" type="submit">ご飯を保存</button>
+  </form>
+  <div class="list compact-list" id="mealMiniList"></div>
+</section>
+<section class="life-section">
+  <div class="panel-subheader"><h3>運動・活動の記録</h3><small>外出や家事もOK</small></div>
+  <form class="form-grid card-form compact-form" id="exerciseForm">
+    <label>日付<input name="date" required="" type="date"/></label>
+    <label>時間<input name="time" type="time"/></label>
+    <label>種類<select name="exerciseType"><option>散歩</option><option>ストレッチ</option><option>筋トレ</option><option>外出</option><option>家事</option><option>通院</option><option>その他</option></select></label>
+    <label>分数<input name="minutes" min="0" max="600" step="5" type="number" placeholder="10"/></label>
+    <label>強さ<select name="intensity"><option>ゆるい</option><option>普通</option><option>きつい</option><option>不明</option></select></label>
+    <label class="full">メモ<textarea name="memo" rows="2" placeholder="歩いた、買い物した、動けなかった等"></textarea></label>
+    <button class="primary" type="submit">運動を保存</button>
+  </form>
+  <div class="list compact-list" id="exerciseMiniList"></div>
+</section>
 </div>
 </div>
 <div aria-hidden="true" class="panel" id="moodPanel">
@@ -167,6 +192,24 @@
 <button class="primary" type="submit">予定を保存</button>
 </form>
 <h3>予定一覧</h3><p class="hint">日付と時間が近い順に並ぶよ。今日の予定はホームでキャラが教えてくれる。</p><div class="list schedule-todo-list" id="scheduleList"></div>
+<section class="todo-xp-section">
+  <div class="xp-card" id="xpSummary">
+    <span>Lv.1</span>
+    <strong>0 XP</strong>
+    <small>今日の完了タスクや記録で増えるよ</small>
+    <div class="xp-bar"><i style="width:0%"></i></div>
+  </div>
+  <div class="panel-subheader"><h3>ToDo</h3><small>完了すると経験値になる</small></div>
+  <form class="form-grid card-form compact-form" id="todoForm">
+    <label>日付<input name="date" required="" type="date"/></label>
+    <label>時間<input name="time" type="time"/></label>
+    <label>カテゴリ<select name="category"><option>仕事</option><option>家事</option><option>病院</option><option>作業</option><option>買い物</option><option>セルフケア</option><option>その他</option></select></label>
+    <label>経験値<select name="xp"><option value="5">5</option><option value="10" selected="">10</option><option value="20">20</option><option value="30">30</option></select></label>
+    <label class="full">やること<input name="title" placeholder="今日やること" required="" type="text"/></label>
+    <button class="primary" type="submit">ToDoを追加</button>
+  </form>
+  <div class="list schedule-todo-list" id="todoList"></div>
+</section>
 </div>
 </div>
 <div aria-hidden="true" class="panel" id="diaryPanel">

@@ -1,7 +1,6 @@
-# ∞Care prototype UI aknk v7 weatherfix
+# ∞Care prototype UI aknk v8 life todo
 
-- v6の機能はそのまま
-- 設定画面の都市名変更を即時天気取得へ反映
-- 天気取得ボタンが入力中の都市名を直接読む
-- よく使いそうな地名は座標プリセットで安定取得
-- URL: http://localhost:5226/
+- v7の天気修正はそのまま
+- 予定タブにToDoと経験値欄を復活
+- 体調タブにご飯・運動/活動の記録欄を追加
+- URL: http://localhost:5228/

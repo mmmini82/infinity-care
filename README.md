@@ -1,6 +1,6 @@
-# ∞Care prototype UI aknk v8 life todo
+# ∞Care prototype UI aknk v9 subtabs
 
-- v7の天気修正はそのまま
-- 予定タブにToDoと経験値欄を復活
-- 体調タブにご飯・運動/活動の記録欄を追加
-- URL: http://localhost:5228/
+- 体調タブ内に「体調 / ご飯 / 運動」サブタブ
+- 予定タブ内に「カレンダー / ToDo」サブタブ
+- ToDoに日常プリセット（歯磨き、お風呂、夜の薬、言語学習など）
+- URL: http://localhost:5230/

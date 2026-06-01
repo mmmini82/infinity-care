@@ -8,7 +8,7 @@
 <meta content="yes" name="apple-mobile-web-app-capable"/>
 <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="∞Care" name="apple-mobile-web-app-title"/>
-<title>∞Care prototype - UI aknk v8 life todo</title>
+<title>∞Care prototype - UI aknk v9 subtabs</title>
 <link href="manifest.webmanifest" rel="manifest"/>
 <link href="assets/apple-touch-icon.png" rel="apple-touch-icon"/>
 <link href="assets/favicon-32.png" rel="icon" sizes="32x32" type="image/png"/>
@@ -50,6 +50,12 @@
 <h2>体調</h2>
 <button class="close-panel">×</button>
 </div>
+<div class="sub-tabs" data-tabs="health">
+  <button class="active" data-subtab="health-main" type="button">体調</button>
+  <button data-subtab="health-meal" type="button">ご飯</button>
+  <button data-subtab="health-exercise" type="button">運動</button>
+</div>
+<div class="subtab-page active" data-subtab-page="health-main">
 <form class="form-grid card-form" id="healthForm">
 <label>日付<input name="date" required="" type="date"/></label>
 <label>時間<input name="time" type="time"/></label>
@@ -91,6 +97,8 @@
 <button class="primary" type="submit">体調を保存</button>
 </form>
 <div class="mini-list-block"><h3>最近の体調</h3><div class="list compact-list" id="healthMiniList"></div></div>
+</div>
+<div class="subtab-page" data-subtab-page="health-meal">
 <section class="life-section">
   <div class="panel-subheader"><h3>ご飯の記録</h3><small>食べた・飲んだを残す</small></div>
   <form class="form-grid card-form compact-form" id="mealForm">
@@ -103,6 +111,8 @@
   </form>
   <div class="list compact-list" id="mealMiniList"></div>
 </section>
+</div>
+<div class="subtab-page" data-subtab-page="health-exercise">
 <section class="life-section">
   <div class="panel-subheader"><h3>運動・活動の記録</h3><small>外出や家事もOK</small></div>
   <form class="form-grid card-form compact-form" id="exerciseForm">
@@ -116,6 +126,7 @@
   </form>
   <div class="list compact-list" id="exerciseMiniList"></div>
 </section>
+</div>
 </div>
 </div>
 <div aria-hidden="true" class="panel" id="moodPanel">
@@ -183,6 +194,11 @@
 <div aria-hidden="true" class="panel" id="schedulePanel">
 <div class="panel-card feature-panel-card">
 <div class="panel-header"><h2>予定</h2><button class="close-panel">×</button></div>
+<div class="sub-tabs" data-tabs="schedule">
+  <button class="active" data-subtab="schedule-calendar" type="button">カレンダー</button>
+  <button data-subtab="schedule-todo" type="button">ToDo</button>
+</div>
+<div class="subtab-page active" data-subtab-page="schedule-calendar">
 <form class="form-grid card-form" id="scheduleForm">
 <label>日付<input name="date" required="" type="date"/></label>
 <label>時間<input name="time" type="time"/></label>
@@ -191,7 +207,9 @@
 <label class="full">メモ<textarea name="memo" rows="2"></textarea></label>
 <button class="primary" type="submit">予定を保存</button>
 </form>
-<h3>予定一覧</h3><p class="hint">日付と時間が近い順に並ぶよ。今日の予定はホームでキャラが教えてくれる。</p><div class="list schedule-todo-list" id="scheduleList"></div>
+<h3>今月の予定</h3><div class="schedule-calendar" id="scheduleCalendar"></div><h3>予定一覧</h3><p class="hint">日付と時間が近い順に並ぶよ。今日の予定はホームでキャラが教えてくれる。</p><div class="list schedule-todo-list" id="scheduleList"></div>
+</div>
+<div class="subtab-page" data-subtab-page="schedule-todo">
 <section class="todo-xp-section">
   <div class="xp-card" id="xpSummary">
     <span>Lv.1</span>
@@ -200,6 +218,10 @@
     <div class="xp-bar"><i style="width:0%"></i></div>
   </div>
   <div class="panel-subheader"><h3>ToDo</h3><small>完了すると経験値になる</small></div>
+  <div class="quick-todo-block">
+    <div class="panel-subheader"><h3>日常ToDoプリセット</h3><small>押すと今日のToDoに追加</small></div>
+    <div class="quick-todo-grid" id="quickTodoButtons"></div>
+  </div>
   <form class="form-grid card-form compact-form" id="todoForm">
     <label>日付<input name="date" required="" type="date"/></label>
     <label>時間<input name="time" type="time"/></label>
@@ -210,6 +232,7 @@
   </form>
   <div class="list schedule-todo-list" id="todoList"></div>
 </section>
+</div>
 </div>
 </div>
 <div aria-hidden="true" class="panel" id="diaryPanel">

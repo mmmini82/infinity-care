@@ -1,4 +1,4 @@
-const BUILD_VERSION = "ui-aknk-v8-life-todo-20260601-1";
+const BUILD_VERSION = "ui-aknk-v9-subtabs-20260601-1";
 const SETTINGS_KEY = "infinityCare.moodLog.settings";
 const DB_NAME = "infinity-care-db-mood-log-v3";
 
@@ -223,6 +223,19 @@ const defaultSettings = {
 let db;
 let settings = loadSettings();
 let timer = { total: 25 * 60, remaining: 25 * 60, running: false, interval: null, characterId: "current", task: "" };
+
+const dailyTodoPresets = [
+  { title:"歯磨き", category:"セルフケア", xp:5 },
+  { title:"お風呂", category:"セルフケア", xp:10 },
+  { title:"夜の薬", category:"セルフケア", xp:10 },
+  { title:"朝の薬", category:"セルフケア", xp:10 },
+  { title:"言語学習", category:"勉強", xp:20 },
+  { title:"ご飯を食べる", category:"セルフケア", xp:5 },
+  { title:"水分をとる", category:"セルフケア", xp:5 },
+  { title:"洗濯", category:"家事", xp:15 },
+  { title:"ゴミ捨て", category:"家事", xp:10 },
+  { title:"SNSを閉じる", category:"セルフケア", xp:10 }
+];
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
@@ -532,11 +545,27 @@ function idbPut(name, value){ return new Promise((res,rej)=>{ const r=store(name
 function idbClear(name){ return new Promise((res,rej)=>{ const r=store(name,"readwrite").clear(); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
 function idbDelete(name, key){ return new Promise((res,rej)=>{ const r=store(name,"readwrite").delete(key); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
 
+
+function setupSubTabs(root=document){
+  root.querySelectorAll(".sub-tabs").forEach(group=>{
+    group.querySelectorAll("button[data-subtab]").forEach(btn=>{
+      if(btn.dataset.boundSubtab) return;
+      btn.dataset.boundSubtab = "1";
+      btn.addEventListener("click", ()=>{
+        const target = btn.dataset.subtab;
+        group.querySelectorAll("button[data-subtab]").forEach(b=>b.classList.toggle("active", b === btn));
+        const panel = group.closest(".panel-card") || document;
+        panel.querySelectorAll(".subtab-page").forEach(page=>page.classList.toggle("active", page.dataset.subtabPage === target));
+      });
+    });
+  });
+}
+
 function openPanel(id){
   const panel = document.getElementById(id); if(!panel) return;
   if(id === "healthPanel") { loadTodayHealth(); loadLifeForms(); renderHealthMiniList(); renderLifeMiniLists(); }
   if(id === "moodPanel") { loadTodayMood(); renderMoodMiniList(); updateSupportPrompt(); }
-  if(id === "schedulePanel") { renderSchedules(); renderTodos(); renderXpSummary(); }
+  if(id === "schedulePanel") { renderSchedules(); renderScheduleCalendar(); renderTodos(); renderXpSummary(); renderQuickTodoButtons(); }
   if(id === "diaryPanel") { loadTodayDiary(); renderDiaries(); }
   if(id === "logsPanel") { renderLogsPanel(); }
   if(id === "settingsPanel") { renderPickers(); loadSettingsForm(); renderHome(characterLine(currentCharacter(), "settings")); }
@@ -751,7 +780,37 @@ async function renderXpSummary(){
   box.innerHTML = `<span>Lv.${level}</span><strong>${xp.total} XP</strong><small>ToDo ${xp.doneTodos}件 / ご飯 ${xp.meals}件 / 運動 ${xp.exercises}件</small><div class="xp-bar"><i style="width:${progress}%"></i></div>`;
 }
 
-async function saveSchedule(event){ event.preventDefault(); const f=event.currentTarget; const d=new FormData(f); const item={ id:crypto.randomUUID(), date:d.get("date"), time:d.get("time")||"", category:d.get("category"), title:d.get("title"), memo:d.get("memo")||"", done:false, createdAt:new Date().toISOString() }; await idbPut("schedules", item); f.reset(); f.date.value=todayISO(); await renderSchedules(); setSpeech(await todayScheduleSpeechLine()); showToast("予定を保存したよ"); }
+
+function renderScheduleCalendar(){
+  const cal=$("#scheduleCalendar"); if(!cal) return;
+  idbGetAll("schedules").then(items=>{
+    const dates=new Set(items.map(s=>s.date));
+    const today=todayISO();
+    cal.innerHTML = `<div class="calendar-weeknames"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div><div class="calendar-grid">${monthDays().map(d=> d ? `<button type="button" class="calendar-day ${dates.has(d)?"has-entry":""} ${d===today?"today":""}" data-date="${d}"><span>${Number(d.slice(-2))}</span></button>` : `<span class="calendar-blank"></span>`).join("")}</div>`;
+    cal.querySelectorAll(".calendar-day").forEach(btn=>btn.addEventListener("click", ()=>{
+      const f=$("#scheduleForm");
+      if(f) f.date.value = btn.dataset.date;
+      showToast(`${btn.dataset.date}の予定を入力できるよ`);
+    }));
+  });
+}
+function renderQuickTodoButtons(){
+  const box=$("#quickTodoButtons"); if(!box) return;
+  box.innerHTML = dailyTodoPresets.map(p=>`<button type="button" data-preset="${escapeHTML(p.title)}"><strong>${escapeHTML(p.title)}</strong><small>${escapeHTML(p.category)} / ${p.xp}XP</small></button>`).join("");
+  box.querySelectorAll("button[data-preset]").forEach(btn=>{
+    btn.addEventListener("click", async()=>{
+      const preset = dailyTodoPresets.find(p=>p.title === btn.dataset.preset);
+      if(!preset) return;
+      const item={ id:crypto.randomUUID(), date:todayISO(), time:"", category:preset.category, title:preset.title, xp:preset.xp, done:false, createdAt:new Date().toISOString(), updatedAt:new Date().toISOString() };
+      await idbPut("todos", item);
+      await renderTodos(); await renderXpSummary();
+      setSpeech(`今日のToDoに「${preset.title}」を入れたよ。できたら押して、経験値にしよう。`);
+      showToast(`${preset.title}を追加したよ`);
+    });
+  });
+}
+
+async function saveSchedule(event){ event.preventDefault(); const f=event.currentTarget; const d=new FormData(f); const item={ id:crypto.randomUUID(), date:d.get("date"), time:d.get("time")||"", category:d.get("category"), title:d.get("title"), memo:d.get("memo")||"", done:false, createdAt:new Date().toISOString() }; await idbPut("schedules", item); f.reset(); f.date.value=todayISO(); await renderSchedules(); renderScheduleCalendar(); setSpeech(await todayScheduleSpeechLine()); showToast("予定を保存したよ"); }
 async function renderSchedules(){
   const list=$("#scheduleList");
   const items=(await idbGetAll("schedules")).sort((a,b)=>parseDateTimeValue(a).localeCompare(parseDateTimeValue(b))).slice(0,30);
@@ -973,6 +1032,7 @@ function setActiveNav(panelId){ $$(".bottom-nav button[data-panel]").forEach(btn
 
 async function clearPrototypeCaches(){ if("serviceWorker" in navigator){ try{ const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); }catch{} } if("caches" in window){ try{ const keys=await caches.keys(); await Promise.all(keys.filter(k=>k.startsWith("infinity-care")).map(k=>caches.delete(k))); }catch{} } }
 function bindEvents(){
+  setupSubTabs(document);
   $$(".bottom-nav button[data-panel]").forEach(b=>b.addEventListener("click", async()=>{ setActiveNav(b.dataset.panel); openPanel(b.dataset.panel); if(b.dataset.panel === "schedulePanel") setSpeech(await todayScheduleSpeechLine()); else setSpeech(weatherSpeechLine()); }));
   $("#openSettings").addEventListener("click",()=>openPanel("settingsPanel"));
   $(".home-stage").addEventListener("click", (e)=>{ if(e.target.closest(".character, .speech-card")) setSpeech(homeTapLine()); });
@@ -1003,5 +1063,5 @@ function bindEvents(){
   $("#diaryForm").date.value=todayISO();
 }
 
-async function init(){ await clearPrototypeCaches(); db=await openDB(); bindEvents(); preloadBackgrounds(); renderHome(); renderPickers(); loadSettingsForm(); syncRangeLabels(document); setActiveNav("moodPanel"); await renderSchedules(); await renderTodos(); await renderXpSummary(); maybeRefreshWeather(); setInterval(updateClock, 30 * 1000); }
+async function init(){ await clearPrototypeCaches(); db=await openDB(); bindEvents(); preloadBackgrounds(); renderHome(); renderPickers(); loadSettingsForm(); syncRangeLabels(document); setActiveNav("moodPanel"); await renderSchedules(); renderScheduleCalendar(); await renderTodos(); await renderXpSummary(); renderQuickTodoButtons(); maybeRefreshWeather(); setInterval(updateClock, 30 * 1000); }
 init().catch(e=>{ console.error(e); showToast("初期化に失敗したかも"); });

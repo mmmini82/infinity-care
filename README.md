@@ -1,8 +1,5 @@
-# ∞Care prototype UI aknk v3 sleep
+# ∞Care prototype UI aknk v4 position
 
-- 体調・気分は日付＋時間で複数回記録
-- 睡眠は「寝た時間→起きた時間」で自動計算
-- 予定は日付・時間が近い順に一覧表示
-- 今日の予定はキャラ台詞で案内
-- 日記は月カレンダー付き
-- URL: http://localhost:5218/
+- v3 sleep の機能はそのまま
+- ホームの人物位置とセリフ位置を再調整
+- URL: http://localhost:5220/

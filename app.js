@@ -1,4 +1,4 @@
-const BUILD_VERSION = "ui-aknk-sleep-20260601-1";
+const BUILD_VERSION = "ui-aknk-position-20260601-1";
 const SETTINGS_KEY = "infinityCare.moodLog.settings";
 const DB_NAME = "infinity-care-db-mood-log-v3";
 

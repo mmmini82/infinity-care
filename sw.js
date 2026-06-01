@@ -1,4 +1,4 @@
-const CACHE_NAME = "infinity-care-mood-log-v1";
+const CACHE_NAME = "infinity-care-mood-log-v3";
 const ASSETS = [
   "./",
   "./index.html",

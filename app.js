@@ -1,4 +1,4 @@
-const BUILD_VERSION = "ui-aknk-v10-rewards-lines-20260601-1";
+const BUILD_VERSION = "ui-aknk-v11-rewardfix-20260601-1";
 const SETTINGS_KEY = "infinityCare.moodLog.settings";
 const DB_NAME = "infinity-care-db-mood-log-v3";
 
@@ -621,18 +621,45 @@ function affinityLevel(value){
   if(value >= 10) return "なかよし";
   return "通常";
 }
+
+function ensureRewardOverlay(){
+  let overlay = $("#rewardOverlay");
+  if(overlay) return overlay;
+  overlay = document.createElement("div");
+  overlay.className = "reward-overlay";
+  overlay.id = "rewardOverlay";
+  overlay.setAttribute("aria-hidden","true");
+  overlay.innerHTML = `<div class="reward-card">
+    <button class="reward-close" id="rewardClose" type="button">×</button>
+    <div class="reward-chibi-wrap"><img alt="ほめほめキャラ" id="rewardChibi" src="assets/characters/haruka.png"/></div>
+    <p class="reward-title" id="rewardTitle">ToDo達成！</p>
+    <p class="reward-line" id="rewardLine">南帆、えらいよ。</p>
+    <div class="reward-gains"><span id="rewardXp">+10 XP</span><span id="rewardAffinity">好感度 +2</span></div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener("click", e=>{ if(e.target.id==="rewardOverlay") hideReward(); });
+  overlay.querySelector("#rewardClose")?.addEventListener("click", hideReward);
+  return overlay;
+}
+
 function showReward({ title="ToDo達成！", line="", xp=0, affinity=0, chara=currentCharacter() } = {}){
-  const overlay=$("#rewardOverlay"); if(!overlay) return;
-  $("#rewardChibi").src = assetUrl(chara.image);
-  $("#rewardTitle").textContent = title;
-  $("#rewardLine").textContent = line || randomFrom(rewardPraiseLines[chara.id] || rewardPraiseLines.haruka);
-  $("#rewardXp").textContent = `+${xp} XP`;
-  $("#rewardAffinity").textContent = `好感度 +${affinity}`;
+  const overlay=ensureRewardOverlay();
+  const chibi=$("#rewardChibi");
+  const titleEl=$("#rewardTitle");
+  const lineEl=$("#rewardLine");
+  const xpEl=$("#rewardXp");
+  const affEl=$("#rewardAffinity");
+  if(chibi) chibi.src = assetUrl(chara.image);
+  if(titleEl) titleEl.textContent = title;
+  if(lineEl) lineEl.textContent = line || randomFrom(rewardPraiseLines[chara.id] || rewardPraiseLines.haruka);
+  if(xpEl) xpEl.textContent = `+${xp} XP`;
+  if(affEl) affEl.textContent = `好感度 +${affinity}`;
   overlay.classList.add("show");
   overlay.setAttribute("aria-hidden","false");
 }
 function hideReward(){
-  const overlay=$("#rewardOverlay"); if(!overlay) return;
+  const overlay=$("#rewardOverlay");
+  if(!overlay) return;
   overlay.classList.remove("show");
   overlay.setAttribute("aria-hidden","true");
 }
@@ -880,13 +907,16 @@ async function toggleTodo(id){
   item.completedBy = item.done ? settings.characterId : "";
   await idbPut("todos", item);
   const chara=currentCharacter();
+  let rewardPayload = null;
   if(item.done && !wasDone){
     const affGain = Math.max(1, Math.round(Number(item.xp || 10) / 5));
     await addAffinity(chara.id, affGain);
-    showReward({ title:"ToDo達成！", line:randomFrom(rewardPraiseLines[chara.id] || rewardPraiseLines.haruka), xp:Number(item.xp||10), affinity:affGain, chara });
+    rewardPayload = { title:"ToDo達成！", line:randomFrom(rewardPraiseLines[chara.id] || rewardPraiseLines.haruka), xp:Number(item.xp||10), affinity:affGain, chara };
   }
-  await renderTodos(); await renderProgressWidgets();
+  await renderTodos();
+  await renderProgressWidgets();
   setSpeech(item.done ? `ToDo完了。${item.xp || 10}XP入ったよ、ちゃんと進んでる。` : `ToDoを未完了に戻したよ。やり直せる形にしておこう。`);
+  if(rewardPayload) requestAnimationFrame(()=>showReward(rewardPayload));
 }
 async function deleteTodo(id){
   await idbDelete("todos", id);
@@ -1162,7 +1192,24 @@ async function importData(event){ const file=event.target.files?.[0]; if(!file)r
 function setActiveNav(panelId){ $$(".bottom-nav button[data-panel]").forEach(btn=>btn.classList.toggle("active", btn.dataset.panel===panelId)); }
 
 async function clearPrototypeCaches(){ if("serviceWorker" in navigator){ try{ const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); }catch{} } if("caches" in window){ try{ const keys=await caches.keys(); await Promise.all(keys.filter(k=>k.startsWith("infinity-care")).map(k=>caches.delete(k))); }catch{} } }
+
+async function handleGlobalTodoClicks(event){
+  const toggle = event.target.closest?.("[data-todo-toggle]");
+  if(toggle){
+    event.preventDefault();
+    await toggleTodo(toggle.dataset.todoToggle);
+    return;
+  }
+  const del = event.target.closest?.("[data-todo-delete]");
+  if(del){
+    event.preventDefault();
+    await deleteTodo(del.dataset.todoDelete);
+    return;
+  }
+}
+
 function bindEvents(){
+  document.addEventListener("click", handleGlobalTodoClicks);
   setupSubTabs(document);
   $("#rewardClose")?.addEventListener("click", hideReward);
   $("#rewardOverlay")?.addEventListener("click", e=>{ if(e.target.id==="rewardOverlay") hideReward(); });

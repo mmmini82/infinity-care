@@ -1957,3 +1957,17 @@ body::before {
 .chart-wrap svg .headache { stroke: rgba(255,176,190,.95); fill: rgba(255,176,190,.95); }
 .chart-wrap svg .stomach { stroke: rgba(210,141,255,.95); fill: rgba(210,141,255,.95); }
 .chart-wrap svg .period { stroke: rgba(248,73,114,.95); fill: rgba(248,73,114,.95); }
+
+
+/* ui-aknk v11: force reward popup above every panel */
+.reward-overlay.show {
+  display: grid !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+.reward-overlay {
+  z-index: 9999 !important;
+}
+.reward-card {
+  z-index: 10000 !important;
+}

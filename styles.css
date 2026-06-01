@@ -1567,3 +1567,49 @@ body[data-character="haruka"] .character {
     bottom: 70px !important;
   }
 }
+
+
+/* ui-aknk v5: fine tune home composition - larger/lower character, dialogue closer to bottom menu */
+.character {
+  bottom: -14px !important;
+  max-height: min(66dvh, 600px) !important;
+  max-width: min(118%, 470px) !important;
+}
+body[data-character="haruka"] .character {
+  left: 51.2% !important;
+}
+.speech-card {
+  bottom: 24px !important;
+  border-radius: 22px !important;
+  padding: 12px 14px 13px !important;
+}
+.home-stage::before {
+  bottom: 72px !important;
+}
+@media (display-mode: standalone) {
+  .character {
+    bottom: -10px !important;
+    max-height: min(65dvh, 590px) !important;
+  }
+  .speech-card {
+    bottom: 28px !important;
+  }
+}
+@media (max-height: 760px) {
+  .character {
+    bottom: -18px !important;
+    max-height: min(64dvh, 570px) !important;
+  }
+  .speech-card {
+    bottom: 20px !important;
+  }
+}
+@media (max-height: 680px) {
+  .character {
+    bottom: -22px !important;
+    max-height: min(61dvh, 520px) !important;
+  }
+  .speech-card {
+    bottom: 18px !important;
+  }
+}

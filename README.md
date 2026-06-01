@@ -1,5 +1,6 @@
-# ∞Care prototype UI aknk v4 position
+# ∞Care prototype UI aknk v5 position
 
-- v3 sleep の機能はそのまま
-- ホームの人物位置とセリフ位置を再調整
-- URL: http://localhost:5220/
+- v4の機能はそのまま
+- ホームのキャラを少し大きく・下げる
+- セリフカードを下メニュー側へ寄せる
+- URL: http://localhost:5222/

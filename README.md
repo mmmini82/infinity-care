@@ -1,6 +1,6 @@
-# ∞Care prototype UI aknk v12 chibi
+# ∞Care prototype UI aknk v18 anniversary lines
 
-- v11のほめほめポップアップ修正はそのまま
-- ほめほめポップアップ用に4人のちびキャラ画像を追加
-- ToDo完了時、設定中キャラのちびキャラが表示される
-- URL: http://localhost:5236/
+- 6/13を「悠結婚記念日」に変更
+- 7/23を「朱音神婚記念日」に変更
+- それぞれの記念日に合わせたキャラ別セリフを追加
+- URL: http://localhost:5248/

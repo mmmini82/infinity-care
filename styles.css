@@ -1991,3 +1991,105 @@ body::before {
 .reward-card {
   width: min(92vw, 360px) !important;
 }
+
+
+/* v13 anniversary calendar */
+.calendar-day { position: relative; overflow: hidden; }
+.calendar-day.has-anniv {
+  background: linear-gradient(145deg, rgba(255,255,255,.16), rgba(var(--accent-rgb),.28));
+  border-color: rgba(255,255,255,.34);
+}
+.calendar-day.has-entry.has-anniv {
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.16), 0 0 18px rgba(var(--accent-rgb),.16);
+}
+.calendar-day i {
+  position:absolute;
+  right:4px;
+  bottom:3px;
+  min-width:14px;
+  height:14px;
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+  font-style:normal;
+  font-size:9px;
+  color:#fff;
+  background: rgba(var(--accent-rgb),.72);
+  border: 1px solid rgba(255,255,255,.35);
+}
+.anniv-section { display:grid; gap:8px; }
+.anniv-list { display:grid; gap:8px; }
+.anniv-card {
+  display:grid;
+  grid-template-columns: 76px minmax(0,1fr);
+  gap:10px;
+  padding:10px;
+  border-radius:18px;
+  background: rgba(255,255,255,.075);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+.anniv-date {
+  display:grid;
+  align-content:center;
+  justify-items:center;
+  gap:4px;
+  padding:8px 6px;
+  border-radius:14px;
+  background: rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.12);
+}
+.anniv-date strong { color:#fff; font-size:12px; line-height:1.1; text-align:center; }
+.anniv-date span { color:rgba(255,255,255,.70); font-size:10px; font-weight:800; }
+.anniv-card p { margin:0; color:rgba(255,255,255,.78); font-size:12px; line-height:1.55; }
+.anniv-card b { display:block; color:#fff; font-size:13px; margin-bottom:2px; }
+.anniv-card small { display:inline-block; color:rgba(255,255,255,.58); font-weight:800; margin-right:6px; }
+.anniv-card em { display:inline-block; font-style:normal; color:rgba(255,255,255,.76); background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.10); border-radius:999px; padding:1px 6px; font-size:10px; }
+.anniv-haruka { border-color: rgba(129,166,255,.24); }
+.anniv-akane { border-color: rgba(255,99,99,.26); }
+.anniv-masumi { border-color: rgba(192,139,255,.26); }
+.anniv-hin { border-color: rgba(124,219,180,.26); }
+@media (max-width: 420px){ .anniv-card { grid-template-columns: 68px minmax(0,1fr); } }
+
+
+/* ui-aknk v14: calendar selected day + prevent chibi from taking over home */
+#characterImage.character {
+  object-fit: contain !important;
+  object-position: center bottom !important;
+}
+.calendar-day.selected {
+  outline: 2px solid rgba(255,255,255,.78);
+  outline-offset: 2px;
+  background: rgba(var(--accent-rgb),.30) !important;
+}
+.selected-day-section {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+.selected-day-section .anniv-card {
+  margin-bottom: 8px;
+}
+
+
+/* ui-aknk v17: selected day only schedule calendar */
+.anniv-section {
+  display: none !important;
+}
+.calendar-day.selected {
+  outline: 2px solid rgba(255,255,255,.78);
+  outline-offset: 2px;
+  background: rgba(var(--accent-rgb),.30) !important;
+}
+.selected-day-section {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+.selected-day-section .anniv-card {
+  margin-bottom: 8px;
+}

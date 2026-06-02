@@ -8,7 +8,7 @@
 <meta content="yes" name="apple-mobile-web-app-capable"/>
 <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="∞Care" name="apple-mobile-web-app-title"/>
-<title>∞Care prototype - UI aknk v12 chibi</title>
+<title>∞Care prototype - UI aknk v18 anniversary lines</title>
 <link href="manifest.webmanifest" rel="manifest"/>
 <link href="assets/apple-touch-icon.png" rel="apple-touch-icon"/>
 <link href="assets/favicon-32.png" rel="icon" sizes="32x32" type="image/png"/>
@@ -26,7 +26,7 @@
 <button aria-label="設定" class="icon-button" id="openSettings">⚙︎</button>
 </header>
 <main class="home-stage">
-<img alt="キャラ立ち絵" class="character" id="characterImage" src="assets/chibis/haruka.png"/>
+<img alt="キャラ立ち絵" class="character" id="characterImage" src="assets/characters/haruka.png"/>
 <div aria-label="セリフを変える" class="speech-card" role="button" tabindex="0">
 <div class="speaker-row">
 <span id="speakerName">悠</span>
@@ -207,7 +207,12 @@
 <label class="full">メモ<textarea name="memo" rows="2"></textarea></label>
 <button class="primary" type="submit">予定を保存</button>
 </form>
-<h3>今月の予定</h3><div class="schedule-calendar" id="scheduleCalendar"></div><h3>予定一覧</h3><p class="hint">日付と時間が近い順に並ぶよ。今日の予定はホームでキャラが教えてくれる。</p><div class="list schedule-todo-list" id="scheduleList"></div>
+<h3>今月の予定</h3><div class="schedule-calendar" id="scheduleCalendar"></div>
+
+<section class="selected-day-section">
+  <div class="panel-subheader"><h3 id="selectedScheduleTitle">今日の予定</h3><small>カレンダーの日付を押すと、その日だけ表示</small></div>
+  <div class="list schedule-todo-list" id="scheduleList"></div>
+</section>
 </div>
 <div class="subtab-page" data-subtab-page="schedule-todo">
 <section class="todo-xp-section">

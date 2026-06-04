@@ -1,4 +1,4 @@
-const CACHE_NAME = "infinity-care-ui-aknk-v21-todo-mood-health";
+const CACHE_NAME = "infinity-care-ui-aknk-v22-light";
 const ASSETS = [
   "./",
   "./index.html",

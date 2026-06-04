@@ -1,7 +1,6 @@
-# ∞Care prototype UI aknk v21 todo mood health
+# ∞Care prototype UI aknk v22 light
 
-- ToDoは完了したらリストから消える
-- 完了済みToDoはDBに残るので、経験値は減らない
-- 体温は未入力OKであることを表示
-- 気分に「怖い」「恐怖」「焦る」「落ち着かない」などを追加
-- URL: http://localhost:5254/
+- v21の機能はそのまま
+- キャラ立ち絵・ちびキャラ・アイコン・背景を軽量化
+- 初回読み込みとPWAキャッシュを軽くする目的の版
+- URL: http://localhost:5256/

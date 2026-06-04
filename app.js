@@ -1,4 +1,4 @@
-const BUILD_VERSION = "ui-aknk-v21-todo-mood-health-20260602-1";
+const BUILD_VERSION = "ui-aknk-v22-light-20260602-1";
 const SETTINGS_KEY = "infinityCare.moodLog.settings";
 const DB_NAME = "infinity-care-db-mood-log-v3";
 

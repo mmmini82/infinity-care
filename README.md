@@ -1,6 +1,7 @@
-# ∞Care prototype UI aknk v18 anniversary lines
+# ∞Care prototype UI aknk v21 todo mood health
 
-- 6/13を「悠結婚記念日」に変更
-- 7/23を「朱音神婚記念日」に変更
-- それぞれの記念日に合わせたキャラ別セリフを追加
-- URL: http://localhost:5248/
+- ToDoは完了したらリストから消える
+- 完了済みToDoはDBに残るので、経験値は減らない
+- 体温は未入力OKであることを表示
+- 気分に「怖い」「恐怖」「焦る」「落ち着かない」などを追加
+- URL: http://localhost:5254/

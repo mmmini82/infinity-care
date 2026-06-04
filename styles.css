@@ -2093,3 +2093,37 @@ body::before {
 .selected-day-section .anniv-card {
   margin-bottom: 8px;
 }
+
+
+/* ui-aknk v19: calendar month navigation */
+.calendar-toolbar {
+  display: grid;
+  grid-template-columns: 42px 1fr 42px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.calendar-toolbar strong {
+  text-align: center;
+  font-size: 14px;
+  letter-spacing: .08em;
+}
+.calendar-toolbar button {
+  min-height: 38px;
+  border-radius: 15px;
+  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  font-size: 26px;
+  line-height: 1;
+}
+.calendar-toolbar button:active {
+  transform: translateY(1px);
+}
+
+
+/* ui-aknk v21: completed ToDo is archived, not shown */
+.todo-item.done,
+.todo-item.archived {
+  display: none;
+}

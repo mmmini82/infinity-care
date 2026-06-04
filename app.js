@@ -1,4 +1,4 @@
-const BUILD_VERSION = "ui-aknk-v18-anniversary-lines-20260602-1";
+const BUILD_VERSION = "ui-aknk-v21-todo-mood-health-20260602-1";
 const SETTINGS_KEY = "infinityCare.moodLog.settings";
 const DB_NAME = "infinity-care-db-mood-log-v3";
 
@@ -244,6 +244,8 @@ const defaultSettings = {
 let db;
 let settings = loadSettings();
 let timer = { total: 25 * 60, remaining: 25 * 60, running: false, interval: null, characterId: "current", task: "" };
+let scheduleCalendarMonth = new Date();
+let diaryCalendarMonth = new Date();
 let selectedScheduleDate = "";
 
 const dailyTodoPresets = [
@@ -765,13 +767,14 @@ function openPanel(id){
     if(id === "moodPanel") { loadTodayMood(); renderMoodMiniList(); updateSupportPrompt(); }
     if(id === "schedulePanel") {
       if(!selectedScheduleDate) selectedScheduleDate = todayISO();
+      scheduleCalendarMonth = new Date(`${selectedScheduleDate}T00:00:00`);
       renderScheduleCalendar();
       renderSchedules().catch(console.error);
       renderTodos().catch(console.error);
       renderXpSummary().catch(console.error);
       renderQuickTodoButtons();
     }
-    if(id === "diaryPanel") { loadTodayDiary(); renderDiaries(); }
+    if(id === "diaryPanel") { if(!diaryCalendarMonth) diaryCalendarMonth = new Date(); loadTodayDiary(); renderDiaries(); }
     if(id === "logsPanel") { renderLogsPanel(); }
     if(id === "settingsPanel") { renderPickers(); loadSettingsForm(); renderProgressWidgets(); renderHome(characterLine(currentCharacter(), "settings")); }
   } catch(e) {
@@ -953,32 +956,47 @@ async function saveTodo(event){
 async function toggleTodo(id){
   const item=await idbGet("todos", id);
   if(!item) return;
-  const wasDone = !!item.done;
-  item.done=!item.done;
-  item.updatedAt=new Date().toISOString();
-  item.completedBy = item.done ? settings.characterId : "";
+  const wasDone = !!item.done || !!item.archived;
+  item.done = true;
+  item.archived = true;
+  item.completedAt = new Date().toISOString();
+  item.completedBy = settings.characterId;
+  item.updatedAt = new Date().toISOString();
   await idbPut("todos", item);
+
   const chara=currentCharacter();
-  let rewardPayload = null;
-  if(item.done && !wasDone){
+  if(!wasDone){
     const affGain = Math.max(1, Math.round(Number(item.xp || 10) / 5));
     await addAffinity(chara.id, affGain);
-    rewardPayload = { title:"ToDo達成！", line:randomFrom(rewardPraiseLines[chara.id] || rewardPraiseLines.haruka), xp:Number(item.xp||10), affinity:affGain, chara };
+    showReward({ title:"ToDo達成！", line:randomFrom(rewardPraiseLines[chara.id] || rewardPraiseLines.haruka), xp:Number(item.xp||10), affinity:affGain, chara });
+  }
+
+  await renderTodos();
+  await renderProgressWidgets();
+  setSpeech(`ToDo完了。${item.xp || 10}XP入ったよ。リストからは片づけておいた。`);
+}
+async function deleteTodo(id){
+  const item = await idbGet("todos", id);
+  if(item && (item.done || item.archived)){
+    item.archived = true;
+    item.updatedAt = new Date().toISOString();
+    await idbPut("todos", item);
+    showToast("完了済みToDoは経験値を残したまま片づけたよ");
+  }else{
+    await idbDelete("todos", id);
+    showToast("ToDoを消したよ");
   }
   await renderTodos();
   await renderProgressWidgets();
-  setSpeech(item.done ? `ToDo完了。${item.xp || 10}XP入ったよ、ちゃんと進んでる。` : `ToDoを未完了に戻したよ。やり直せる形にしておこう。`);
-  if(rewardPayload) requestAnimationFrame(()=>showReward(rewardPayload));
-}
-async function deleteTodo(id){
-  await idbDelete("todos", id);
-  await renderTodos(); await renderXpSummary();
-  showToast("ToDoを消したよ");
 }
 async function renderTodos(){
   const list=$("#todoList"); if(!list) return;
-  const items=(await idbGetAll("todos")).sort((a,b)=>parseDateTimeValue(a).localeCompare(parseDateTimeValue(b))).slice(0,40);
-  list.innerHTML = items.length ? items.map(t=>`<article class="schedule-item todo-item ${t.done?"done":""}"><div class="todo-date"><time>${jpDateShort(t.date)} ${t.time||"時間未定"}</time><span>${escapeHTML(t.category || "ToDo")} / ${Number(t.xp||10)}XP</span></div><p><strong>${escapeHTML(t.title)}</strong></p><div class="todo-actions"><button type="button" data-todo-toggle="${t.id}">${t.done?"未完了に戻す":"完了"}</button><button type="button" data-todo-delete="${t.id}">削除</button></div></article>`).join("") : `<p class="hint">ToDoはまだないよ。</p>`;
+  const all=(await idbGetAll("todos")).sort((a,b)=>parseDateTimeValue(a).localeCompare(parseDateTimeValue(b)));
+  const items=all.filter(t=>!t.done && !t.archived).slice(0,40);
+  const completedCount = all.filter(t=>t.done || t.archived).length;
+  list.innerHTML = items.length
+    ? items.map(t=>`<article class="schedule-item todo-item"><div class="todo-date"><time>${jpDateShort(t.date)} ${t.time||"時間未定"}</time><span>${escapeHTML(t.category || "ToDo")} / ${Number(t.xp||10)}XP</span></div><p><strong>${escapeHTML(t.title)}</strong></p><div class="todo-actions"><button type="button" data-todo-toggle="${t.id}">完了</button><button type="button" data-todo-delete="${t.id}">削除</button></div></article>`).join("")
+    : `<p class="hint">未完了のToDoはないよ。${completedCount ? `完了済みは${completedCount}件、経験値として残ってるよ。` : ""}</p>`;
   list.querySelectorAll("[data-todo-toggle]").forEach(b=>b.addEventListener("click",()=>toggleTodo(b.dataset.todoToggle)));
   list.querySelectorAll("[data-todo-delete]").forEach(b=>b.addEventListener("click",()=>deleteTodo(b.dataset.todoDelete)));
 }
@@ -986,10 +1004,11 @@ async function calculateXp(){
   const todos=await idbGetAll("todos");
   const meals=await idbGetAll("mealLogs");
   const exercises=await idbGetAll("exerciseLogs");
-  const todoXp=todos.filter(t=>t.done).reduce((s,t)=>s+Number(t.xp||10),0);
+  const completedTodos = todos.filter(t=>t.done || t.archived);
+  const todoXp=completedTodos.reduce((s,t)=>s+Number(t.xp||10),0);
   const mealXp=meals.reduce((s,m)=>s+Number(m.xp||5),0);
   const exerciseXp=exercises.reduce((s,e)=>s+Number(e.xp||0),0);
-  return { total: todoXp + mealXp + exerciseXp, todoXp, mealXp, exerciseXp, doneTodos: todos.filter(t=>t.done).length, meals: meals.length, exercises: exercises.length };
+  return { total: todoXp + mealXp + exerciseXp, todoXp, mealXp, exerciseXp, doneTodos: completedTodos.length, meals: meals.length, exercises: exercises.length };
 }
 async function renderXpSummary(){ await renderProgressWidgets(); }
 
@@ -1082,13 +1101,20 @@ function renderAnniversaries(){
   // v17: 常時一覧は出さず、選択した日付の欄にだけ記念日を表示する
 }
 function renderScheduleCalendar(){
-  const cal=$("#scheduleCalendar"); if(!cal) return;
+  const cal=$("#scheduleCalendar");
+  if(!cal) return;
   if(!selectedScheduleDate) selectedScheduleDate = todayISO();
+  if(!(scheduleCalendarMonth instanceof Date) || Number.isNaN(scheduleCalendarMonth.getTime())){
+    scheduleCalendarMonth = new Date(`${selectedScheduleDate}T00:00:00`);
+  }
+  const label=$("#scheduleMonthLabel");
+  if(label) label.textContent = monthLabel(scheduleCalendarMonth);
+
   idbGetAll("schedules").then(items=>{
     const scheduleDates=new Set(items.map(s=>s.date));
     const today=todayISO();
-    const days=monthDays();
-    const year = Number((days.find(Boolean)||today).slice(0,4));
+    const days=monthDays(scheduleCalendarMonth);
+    const year = scheduleCalendarMonth.getFullYear();
     const annivMap=new Map();
 
     anniversaries.filter(a=>a.day).forEach(a=>{
@@ -1119,6 +1145,9 @@ function renderScheduleCalendar(){
     }));
 
     renderSchedules().catch(console.error);
+  }).catch(e=>{
+    console.error("renderScheduleCalendar failed:", e);
+    cal.innerHTML = `<p class="hint">カレンダーの読み込みでエラーが出たよ。</p>`;
   });
 }
 
@@ -1157,6 +1186,7 @@ async function saveSchedule(event){
 
   await idbPut("schedules", item);
   selectedScheduleDate = date;
+  scheduleCalendarMonth = new Date(`${date}T00:00:00`);
   f.reset();
   f.date.value = selectedScheduleDate;
 
@@ -1217,25 +1247,64 @@ async function todayScheduleSpeechLine(){
 }
 async function loadTodayDiary(){ const f=$("#diaryForm"); f.date.value=todayISO(); await loadDiaryByDate(f.date.value); }
 async function loadDiaryByDate(date){ const f=$("#diaryForm"); if(!f) return; f.date.value=date || todayISO(); const d=await idbGet("diaries", f.date.value); if(!d){ f.title.value=""; f.body.value=""; f.tags.value=""; return; } f.title.value=d.title||""; f.body.value=d.body||""; f.tags.value=(d.tags||[]).join(","); }
-async function saveDiary(event){ event.preventDefault(); const f=event.currentTarget; const d=new FormData(f); const item={ date:d.get("date"), title:d.get("title")||"", body:d.get("body")||"", tags:String(d.get("tags")||"").split(",").map(s=>s.trim()).filter(Boolean), updatedAt:new Date().toISOString() }; await idbPut("diaries", item); await renderDiaries(); renderHome(characterLine(currentCharacter(), "diary")); showToast("日記を保存したよ"); }
+async function saveDiary(event){
+  event.preventDefault();
+  const f=$("#diaryForm");
+  const d=new FormData(f);
+  const date=d.get("date");
+  const item={ date, title:d.get("title")||"", body:d.get("body")||"", tags:String(d.get("tags")||"").split(",").map(s=>s.trim()).filter(Boolean), updatedAt:new Date().toISOString() };
+  await idbPut("diaries", item);
+  diaryCalendarMonth = new Date(`${date}T00:00:00`);
+  renderHome(characterLine(currentCharacter(),"diary"));
+  await renderDiaries();
+  showToast("日記を保存したよ");
+}
+function monthLabel(date=new Date()){
+  return new Intl.DateTimeFormat("ja-JP", { year:"numeric", month:"long" }).format(date);
+}
+function shiftMonth(date, delta){
+  return new Date(date.getFullYear(), date.getMonth()+delta, 1);
+}
+
 function monthDays(date=new Date()){
-  const y=date.getFullYear(), m=date.getMonth();
-  const first=new Date(y,m,1), last=new Date(y,m+1,0);
-  const start=first.getDay();
-  const out=[];
-  for(let i=0;i<start;i++) out.push(null);
+  const y = date.getFullYear();
+  const m = date.getMonth();
+  const first = new Date(y, m, 1);
+  const last = new Date(y, m + 1, 0);
+  const start = first.getDay();
+  const out = [];
+  for(let i=0; i<start; i++) out.push(null);
   for(let d=1; d<=last.getDate(); d++){
-    const cur=new Date(y,m,d); const tz=cur.getTimezoneOffset()*60000;
-    out.push(new Date(cur-tz).toISOString().slice(0,10));
+    const cur = new Date(y, m, d);
+    const tz = cur.getTimezoneOffset() * 60000;
+    out.push(new Date(cur - tz).toISOString().slice(0,10));
   }
   return out;
 }
+function monthLabel(date=new Date()){
+  return new Intl.DateTimeFormat("ja-JP", { year:"numeric", month:"long" }).format(date);
+}
+function shiftMonth(date, delta){
+  const base = date instanceof Date && !Number.isNaN(date.getTime()) ? date : new Date();
+  return new Date(base.getFullYear(), base.getMonth() + delta, 1);
+}
+
 function renderDiaryCalendar(items){
-  const cal=$("#diaryCalendar"); if(!cal) return;
+  const cal=$("#diaryCalendar");
+  if(!cal) return;
+  if(!(diaryCalendarMonth instanceof Date) || Number.isNaN(diaryCalendarMonth.getTime())){
+    diaryCalendarMonth = new Date();
+  }
+  const label=$("#diaryMonthLabel");
+  if(label) label.textContent = monthLabel(diaryCalendarMonth);
   const dates=new Set(items.map(d=>d.date));
   const today=todayISO();
-  cal.innerHTML = `<div class="calendar-weeknames"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div><div class="calendar-grid">${monthDays().map(d=> d ? `<button type="button" class="calendar-day ${dates.has(d)?"has-entry":""} ${d===today?"today":""}" data-date="${d}"><span>${Number(d.slice(-2))}</span></button>` : `<span class="calendar-blank"></span>`).join("")}</div>`;
-  cal.querySelectorAll(".calendar-day").forEach(btn=>btn.addEventListener("click", async()=>{ await loadDiaryByDate(btn.dataset.date); showToast(`${btn.dataset.date}の日記を開いたよ`); }));
+  const days=monthDays(diaryCalendarMonth);
+  cal.innerHTML = `<div class="calendar-weeknames"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div><div class="calendar-grid">${days.map(d=> d ? `<button type="button" class="calendar-day ${dates.has(d)?"has-entry":""} ${d===today?"today":""}" data-date="${d}"><span>${Number(d.slice(-2))}</span></button>` : `<span class="calendar-blank"></span>`).join("")}</div>`;
+  cal.querySelectorAll(".calendar-day").forEach(btn=>btn.addEventListener("click", async()=>{
+    await loadDiaryByDate(btn.dataset.date);
+    showToast(`${btn.dataset.date}の日記を開いたよ`);
+  }));
 }
 async function renderDiaries(){ const list=$("#diaryList"); const all=(await idbGetAll("diaries")).sort((a,b)=>b.date.localeCompare(a.date)); renderDiaryCalendar(all); const items=all.slice(0,12); list.innerHTML = items.length ? items.map(d=>`<article class="log-item diary-item"><time>${d.date}</time><p><strong>${escapeHTML(d.title || "無題")}</strong>${d.tags?.length?` <small>${escapeHTML(d.tags.join(" / "))}</small>`:""}<br>${escapeHTML((d.body||"").slice(0,120))}${(d.body||"").length>120?"…":""}</p></article>`).join("") : `<p class="hint">まだ日記がないよ。</p>`; }
 
@@ -1436,6 +1505,11 @@ function bindEvents(){
     }
   }));
   $("#openSettings").addEventListener("click",()=>openPanel("settingsPanel"));
+  $("#schedulePrevMonth")?.addEventListener("click",()=>{ scheduleCalendarMonth = shiftMonth(scheduleCalendarMonth, -1); renderScheduleCalendar(); });
+  $("#scheduleNextMonth")?.addEventListener("click",()=>{ scheduleCalendarMonth = shiftMonth(scheduleCalendarMonth, 1); renderScheduleCalendar(); });
+  $("#diaryPrevMonth")?.addEventListener("click",async()=>{ diaryCalendarMonth = shiftMonth(diaryCalendarMonth, -1); await renderDiaries(); });
+  $("#diaryNextMonth")?.addEventListener("click",async()=>{ diaryCalendarMonth = shiftMonth(diaryCalendarMonth, 1); await renderDiaries(); });
+
   $(".home-stage").addEventListener("click", (e)=>{ if(e.target.closest(".character, .speech-card")) setSpeech(homeTapLine()); });
   $$(".close-panel").forEach(b=>b.addEventListener("click", closePanels));
   $$(".panel").forEach(p=>p.addEventListener("click", e=>{ if(e.target===p) closePanels(); }));

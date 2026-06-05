@@ -2120,10 +2120,3 @@ body::before {
 .calendar-toolbar button:active {
   transform: translateY(1px);
 }
-
-
-/* ui-aknk v21: completed ToDo is archived, not shown */
-.todo-item.done,
-.todo-item.archived {
-  display: none;
-}

@@ -1,4 +1,4 @@
-const BUILD_VERSION = "ui-aknk-v23-nofreeze-20260602-1";
+const BUILD_VERSION = "ui-aknk-v19c-calendar-safe-20260602-1";
 const SETTINGS_KEY = "infinityCare.moodLog.settings";
 const DB_NAME = "infinity-care-db-mood-log-v3";
 
@@ -374,14 +374,7 @@ function setBackgroundImage(bg){
   const src = assetUrl(bg.image);
   document.body.dataset.room = bg.id;
   if(layer) layer.style.backgroundImage = `url("${src}")`;
-  if(img){
-    img.onerror = () => {
-      console.warn(`背景画像を読めなかった：${bg.name}`);
-      if(layer) layer.style.backgroundImage = "linear-gradient(160deg, #090811, #1b1528)";
-    };
-    img.src = src;
-    img.alt = bg.name;
-  }
+  if(img){ img.onerror = () => showToast(`背景画像を読めなかった：${bg.name}`); img.src = src; img.alt = bg.name; }
 }
 function preloadBackgrounds(){ Object.values(backgrounds).forEach(bg => { const im = new Image(); im.src = assetUrl(bg.image); }); }
 function applyTheme(){ document.body.classList.remove("theme-blood","theme-snow","theme-night"); if(settings.theme !== "lavender") document.body.classList.add(`theme-${settings.theme}`); }
@@ -629,15 +622,9 @@ async function openDB(){
     req.onerror = () => reject(req.error);
   });
 }
-function store(name, mode="readonly"){
-  if(!db) throw new Error("database is not ready");
-  return db.transaction(name, mode).objectStore(name);
-}
+function store(name, mode="readonly"){ return db.transaction(name, mode).objectStore(name); }
 function idbGet(name, key){ return new Promise((res,rej)=>{ const r=store(name).get(key); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
-function idbGetAll(name){
-  if(!db) return Promise.resolve([]);
-  return new Promise((res,rej)=>{ const r=store(name).getAll(); r.onsuccess=()=>res(r.result || []); r.onerror=()=>rej(r.error); });
-}
+function idbGetAll(name){ return new Promise((res,rej)=>{ const r=store(name).getAll(); r.onsuccess=()=>res(r.result || []); r.onerror=()=>rej(r.error); }); }
 function idbPut(name, value){ return new Promise((res,rej)=>{ const r=store(name,"readwrite").put(value); r.onsuccess=()=>res(value); r.onerror=()=>rej(r.error); }); }
 function idbClear(name){ return new Promise((res,rej)=>{ const r=store(name,"readwrite").clear(); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
 function idbDelete(name, key){ return new Promise((res,rej)=>{ const r=store(name,"readwrite").delete(key); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
@@ -969,9 +956,8 @@ async function saveTodo(event){
 async function toggleTodo(id){
   const item=await idbGet("todos", id);
   if(!item) return;
-  const wasDone = !!item.done || !!item.archived;
+  const wasDone = !!item.done;
   item.done = true;
-  item.archived = true;
   item.completedAt = new Date().toISOString();
   item.completedBy = settings.characterId;
   item.updatedAt = new Date().toISOString();
@@ -990,11 +976,8 @@ async function toggleTodo(id){
 }
 async function deleteTodo(id){
   const item = await idbGet("todos", id);
-  if(item && (item.done || item.archived)){
-    item.archived = true;
-    item.updatedAt = new Date().toISOString();
-    await idbPut("todos", item);
-    showToast("完了済みToDoは経験値を残したまま片づけたよ");
+  if(item?.done){
+    showToast("完了済みToDoは経験値として残してあるよ");
   }else{
     await idbDelete("todos", id);
     showToast("ToDoを消したよ");
@@ -1005,8 +988,8 @@ async function deleteTodo(id){
 async function renderTodos(){
   const list=$("#todoList"); if(!list) return;
   const all=(await idbGetAll("todos")).sort((a,b)=>parseDateTimeValue(a).localeCompare(parseDateTimeValue(b)));
-  const items=all.filter(t=>!t.done && !t.archived).slice(0,40);
-  const completedCount = all.filter(t=>t.done || t.archived).length;
+  const items=all.filter(t=>!t.done).slice(0,40);
+  const completedCount=all.filter(t=>t.done).length;
   list.innerHTML = items.length
     ? items.map(t=>`<article class="schedule-item todo-item"><div class="todo-date"><time>${jpDateShort(t.date)} ${t.time||"時間未定"}</time><span>${escapeHTML(t.category || "ToDo")} / ${Number(t.xp||10)}XP</span></div><p><strong>${escapeHTML(t.title)}</strong></p><div class="todo-actions"><button type="button" data-todo-toggle="${t.id}">完了</button><button type="button" data-todo-delete="${t.id}">削除</button></div></article>`).join("")
     : `<p class="hint">未完了のToDoはないよ。${completedCount ? `完了済みは${completedCount}件、経験値として残ってるよ。` : ""}</p>`;
@@ -1017,7 +1000,7 @@ async function calculateXp(){
   const todos=await idbGetAll("todos");
   const meals=await idbGetAll("mealLogs");
   const exercises=await idbGetAll("exerciseLogs");
-  const completedTodos = todos.filter(t=>t.done || t.archived);
+  const completedTodos=todos.filter(t=>t.done);
   const todoXp=completedTodos.reduce((s,t)=>s+Number(t.xp||10),0);
   const mealXp=meals.reduce((s,m)=>s+Number(m.xp||5),0);
   const exerciseXp=exercises.reduce((s,e)=>s+Number(e.xp||0),0);
@@ -1114,12 +1097,8 @@ function renderAnniversaries(){
   // v17: 常時一覧は出さず、選択した日付の欄にだけ記念日を表示する
 }
 function renderScheduleCalendar(){
-  const cal=$("#scheduleCalendar");
-  if(!cal) return;
+  const cal=$("#scheduleCalendar"); if(!cal) return;
   if(!selectedScheduleDate) selectedScheduleDate = todayISO();
-  if(!(scheduleCalendarMonth instanceof Date) || Number.isNaN(scheduleCalendarMonth.getTime())){
-    scheduleCalendarMonth = new Date(`${selectedScheduleDate}T00:00:00`);
-  }
   const label=$("#scheduleMonthLabel");
   if(label) label.textContent = monthLabel(scheduleCalendarMonth);
 
@@ -1158,9 +1137,6 @@ function renderScheduleCalendar(){
     }));
 
     renderSchedules().catch(console.error);
-  }).catch(e=>{
-    console.error("renderScheduleCalendar failed:", e);
-    cal.innerHTML = `<p class="hint">カレンダーの読み込みでエラーが出たよ。</p>`;
   });
 }
 
@@ -1272,12 +1248,6 @@ async function saveDiary(event){
   await renderDiaries();
   showToast("日記を保存したよ");
 }
-function monthLabel(date=new Date()){
-  return new Intl.DateTimeFormat("ja-JP", { year:"numeric", month:"long" }).format(date);
-}
-function shiftMonth(date, delta){
-  return new Date(date.getFullYear(), date.getMonth()+delta, 1);
-}
 
 function monthDays(date=new Date()){
   const y = date.getFullYear();
@@ -1286,34 +1256,28 @@ function monthDays(date=new Date()){
   const last = new Date(y, m + 1, 0);
   const start = first.getDay();
   const out = [];
-  for(let i=0; i<start; i++) out.push(null);
-  for(let d=1; d<=last.getDate(); d++){
+  for(let i = 0; i < start; i++) out.push(null);
+  for(let d = 1; d <= last.getDate(); d++){
     const cur = new Date(y, m, d);
     const tz = cur.getTimezoneOffset() * 60000;
     out.push(new Date(cur - tz).toISOString().slice(0,10));
   }
   return out;
 }
+
 function monthLabel(date=new Date()){
   return new Intl.DateTimeFormat("ja-JP", { year:"numeric", month:"long" }).format(date);
 }
 function shiftMonth(date, delta){
-  const base = date instanceof Date && !Number.isNaN(date.getTime()) ? date : new Date();
-  return new Date(base.getFullYear(), base.getMonth() + delta, 1);
+  return new Date(date.getFullYear(), date.getMonth()+delta, 1);
 }
-
 function renderDiaryCalendar(items){
-  const cal=$("#diaryCalendar");
-  if(!cal) return;
-  if(!(diaryCalendarMonth instanceof Date) || Number.isNaN(diaryCalendarMonth.getTime())){
-    diaryCalendarMonth = new Date();
-  }
+  const cal=$("#diaryCalendar"); if(!cal) return;
   const label=$("#diaryMonthLabel");
   if(label) label.textContent = monthLabel(diaryCalendarMonth);
   const dates=new Set(items.map(d=>d.date));
   const today=todayISO();
-  const days=monthDays(diaryCalendarMonth);
-  cal.innerHTML = `<div class="calendar-weeknames"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div><div class="calendar-grid">${days.map(d=> d ? `<button type="button" class="calendar-day ${dates.has(d)?"has-entry":""} ${d===today?"today":""}" data-date="${d}"><span>${Number(d.slice(-2))}</span></button>` : `<span class="calendar-blank"></span>`).join("")}</div>`;
+  cal.innerHTML = `<div class="calendar-weeknames"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div><div class="calendar-grid">${monthDays(diaryCalendarMonth).map(d=> d ? `<button type="button" class="calendar-day ${dates.has(d)?"has-entry":""} ${d===today?"today":""}" data-date="${d}"><span>${Number(d.slice(-2))}</span></button>` : `<span class="calendar-blank"></span>`).join("")}</div>`;
   cal.querySelectorAll(".calendar-day").forEach(btn=>btn.addEventListener("click", async()=>{
     await loadDiaryByDate(btn.dataset.date);
     showToast(`${btn.dataset.date}の日記を開いたよ`);
@@ -1551,32 +1515,5 @@ function bindEvents(){
   $("#diaryForm").date.value=todayISO();
 }
 
-async function init(){
-  try {
-    bindEvents();
-    renderHome();
-    renderPickers();
-    loadSettingsForm();
-    syncRangeLabels(document);
-    setActiveNav("moodPanel");
-    maybeRefreshWeather();
-    setInterval(updateClock, 30 * 1000);
-  } catch(e) {
-    console.error("early init failed:", e);
-    try { showToast("画面の初期表示でエラーが出たかも"); } catch {}
-  }
-
-  try {
-    db = await openDB();
-    selectedScheduleDate = selectedScheduleDate || todayISO();
-    await renderSchedules();
-    renderScheduleCalendar();
-    await renderTodos();
-    await renderProgressWidgets();
-    renderQuickTodoButtons();
-  } catch(e) {
-    console.error("database init failed:", e);
-    showToast("保存データの読み込みが少し詰まったかも。画面操作はできるよ");
-  }
-}
-init().catch(e=>{ console.error(e); try { showToast("初期化に失敗したかも"); } catch {} });
+async function init(){ await clearPrototypeCaches(); db=await openDB(); bindEvents(); preloadBackgrounds(); renderHome(); renderPickers(); loadSettingsForm(); syncRangeLabels(document); setActiveNav("moodPanel"); selectedScheduleDate = selectedScheduleDate || todayISO(); await renderSchedules(); renderScheduleCalendar(); renderAnniversaries(); await renderTodos(); await renderProgressWidgets(); renderQuickTodoButtons(); maybeRefreshWeather(); setInterval(updateClock, 30 * 1000); }
+init().catch(e=>{ console.error(e); showToast("初期化に失敗したかも"); });

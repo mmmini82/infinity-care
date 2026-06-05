@@ -1,7 +1,6 @@
-# ∞Care prototype UI aknk v23 nofreeze
+# ∞Care prototype UI aknk v19c calendar safe
 
-- v22 lightの機能はそのまま
-- 起動時にキャッシュ削除を毎回走らせる処理を停止
-- ボタン操作を先に有効化してから保存データを読み込むように変更
-- IndexedDBの読み込みが詰まっても画面操作が止まらないように調整
-- URL: http://localhost:5258/
+- v19bをベースにした安全版
+- カレンダー表示に必要なmonthDays関数だけを復旧
+- ToDo・体調・気分のv19b変更はそのまま
+- URL: http://localhost:5268/

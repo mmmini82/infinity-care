@@ -1,4 +1,4 @@
-const CACHE_NAME = "infinity-care-ui-aknk-v22-light";
+const CACHE_NAME = "infinity-care-ui-aknk-v23-nofreeze";
 const ASSETS = [
   "./",
   "./index.html",

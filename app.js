@@ -1,4 +1,4 @@
-const BUILD_VERSION = "ui-aknk-v22-light-20260602-1";
+const BUILD_VERSION = "ui-aknk-v23-nofreeze-20260602-1";
 const SETTINGS_KEY = "infinityCare.moodLog.settings";
 const DB_NAME = "infinity-care-db-mood-log-v3";
 
@@ -374,7 +374,14 @@ function setBackgroundImage(bg){
   const src = assetUrl(bg.image);
   document.body.dataset.room = bg.id;
   if(layer) layer.style.backgroundImage = `url("${src}")`;
-  if(img){ img.onerror = () => showToast(`背景画像を読めなかった：${bg.name}`); img.src = src; img.alt = bg.name; }
+  if(img){
+    img.onerror = () => {
+      console.warn(`背景画像を読めなかった：${bg.name}`);
+      if(layer) layer.style.backgroundImage = "linear-gradient(160deg, #090811, #1b1528)";
+    };
+    img.src = src;
+    img.alt = bg.name;
+  }
 }
 function preloadBackgrounds(){ Object.values(backgrounds).forEach(bg => { const im = new Image(); im.src = assetUrl(bg.image); }); }
 function applyTheme(){ document.body.classList.remove("theme-blood","theme-snow","theme-night"); if(settings.theme !== "lavender") document.body.classList.add(`theme-${settings.theme}`); }
@@ -622,9 +629,15 @@ async function openDB(){
     req.onerror = () => reject(req.error);
   });
 }
-function store(name, mode="readonly"){ return db.transaction(name, mode).objectStore(name); }
+function store(name, mode="readonly"){
+  if(!db) throw new Error("database is not ready");
+  return db.transaction(name, mode).objectStore(name);
+}
 function idbGet(name, key){ return new Promise((res,rej)=>{ const r=store(name).get(key); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
-function idbGetAll(name){ return new Promise((res,rej)=>{ const r=store(name).getAll(); r.onsuccess=()=>res(r.result || []); r.onerror=()=>rej(r.error); }); }
+function idbGetAll(name){
+  if(!db) return Promise.resolve([]);
+  return new Promise((res,rej)=>{ const r=store(name).getAll(); r.onsuccess=()=>res(r.result || []); r.onerror=()=>rej(r.error); });
+}
 function idbPut(name, value){ return new Promise((res,rej)=>{ const r=store(name,"readwrite").put(value); r.onsuccess=()=>res(value); r.onerror=()=>rej(r.error); }); }
 function idbClear(name){ return new Promise((res,rej)=>{ const r=store(name,"readwrite").clear(); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
 function idbDelete(name, key){ return new Promise((res,rej)=>{ const r=store(name,"readwrite").delete(key); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
@@ -1538,5 +1551,32 @@ function bindEvents(){
   $("#diaryForm").date.value=todayISO();
 }
 
-async function init(){ await clearPrototypeCaches(); db=await openDB(); bindEvents(); preloadBackgrounds(); renderHome(); renderPickers(); loadSettingsForm(); syncRangeLabels(document); setActiveNav("moodPanel"); selectedScheduleDate = selectedScheduleDate || todayISO(); await renderSchedules(); renderScheduleCalendar(); renderAnniversaries(); await renderTodos(); await renderProgressWidgets(); renderQuickTodoButtons(); maybeRefreshWeather(); setInterval(updateClock, 30 * 1000); }
-init().catch(e=>{ console.error(e); showToast("初期化に失敗したかも"); });
+async function init(){
+  try {
+    bindEvents();
+    renderHome();
+    renderPickers();
+    loadSettingsForm();
+    syncRangeLabels(document);
+    setActiveNav("moodPanel");
+    maybeRefreshWeather();
+    setInterval(updateClock, 30 * 1000);
+  } catch(e) {
+    console.error("early init failed:", e);
+    try { showToast("画面の初期表示でエラーが出たかも"); } catch {}
+  }
+
+  try {
+    db = await openDB();
+    selectedScheduleDate = selectedScheduleDate || todayISO();
+    await renderSchedules();
+    renderScheduleCalendar();
+    await renderTodos();
+    await renderProgressWidgets();
+    renderQuickTodoButtons();
+  } catch(e) {
+    console.error("database init failed:", e);
+    showToast("保存データの読み込みが少し詰まったかも。画面操作はできるよ");
+  }
+}
+init().catch(e=>{ console.error(e); try { showToast("初期化に失敗したかも"); } catch {} });

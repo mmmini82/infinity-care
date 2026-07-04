@@ -1,324 +1,286 @@
-<!DOCTYPE html>
-
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
-<meta content="#05040a" name="theme-color"/>
-<meta content="yes" name="apple-mobile-web-app-capable"/>
-<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
-<meta content="∞Care" name="apple-mobile-web-app-title"/>
-<title>∞Care prototype - UI aknk v19c calendar safe</title>
-<link href="manifest.webmanifest" rel="manifest"/>
-<link href="assets/apple-touch-icon.png" rel="apple-touch-icon"/>
-<link href="assets/favicon-32.png" rel="icon" sizes="32x32" type="image/png"/>
-<link href="styles.css" rel="stylesheet"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#151021" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="∞Care" />
+  <title>∞Care v20.1 Daily Hub</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<div class="app-shell" id="app">
-<div class="background-layer" id="backgroundLayer"><img alt="現在の場所背景" id="backgroundImage"/></div>
-<div class="veil"></div>
-<header class="top-bar">
-<div>
-<p class="eyebrow">Minaho Life Companion</p>
-<h1 class="today-line"><span id="todayLabel">今日</span><span id="timeLabel">00:00</span><span id="weatherMini" aria-label="現在の天気"></span></h1>
-</div>
-<button aria-label="設定" class="icon-button" id="openSettings">⚙︎</button>
-</header>
-<main class="home-stage">
-<img alt="キャラ立ち絵" class="character" id="characterImage" src="assets/characters/haruka.png"/>
-<div aria-label="セリフを変える" class="speech-card" role="button" tabindex="0">
-<div class="speaker-row">
-<span id="speakerName">悠</span>
-<span id="roomName">シェアハウス</span>
-</div>
-<p id="speechText">南帆、今日のこと、少しだけ僕に預けて。</p>
-</div>
-</main>
-<nav aria-label="メインメニュー" class="bottom-nav feature-nav">
-<button data-panel="healthPanel">体調</button>
-<button data-panel="moodPanel">気分</button>
-<button data-panel="schedulePanel">予定<br/>タスク</button>
-<button data-panel="diaryPanel">日記</button>
-<button data-panel="logsPanel">ログ</button>
-<button data-panel="settingsPanel">設定</button>
-</nav>
-</div>
-<div aria-hidden="true" class="panel" id="healthPanel">
-<div class="panel-card feature-panel-card">
-<div class="panel-header">
-<h2>体調</h2>
-<button class="close-panel">×</button>
-</div>
-<div class="sub-tabs" data-tabs="health">
-  <button class="active" data-subtab="health-main" type="button">体調</button>
-  <button data-subtab="health-meal" type="button">ご飯</button>
-  <button data-subtab="health-exercise" type="button">運動</button>
-</div>
-<div class="subtab-page active" data-subtab-page="health-main">
-<form class="form-grid card-form" id="healthForm">
-<label>日付<input name="date" required="" type="date"/></label>
-<label>時間<input name="time" type="time"/></label>
-<label>寝た時間<input name="sleepStart" type="time"/></label>
-<label>起きた時間<input name="sleepEnd" type="time"/></label>
-<p class="form-note full">睡眠時間は「寝た時間→起きた時間」から自動で計算するよ。</p>
-<label>体温（未入力OK）<input max="42" min="32" name="temperature" placeholder="未入力OK" step="0.1" type="number"/></label>
-<label>薬
-          <select name="medicine">
-<option value="未入力">未入力</option><option value="飲んだ">飲んだ</option><option value="飲んでない">飲んでない</option><option value="不要">不要</option>
-</select>
-</label>
-<label>食欲
-          <select name="appetite">
-<option value="普通">普通</option><option value="ない">ない</option><option value="ある">ある</option><option value="よくわからない">よくわからない</option>
-</select>
-</label>
-<label>生理
-          <select name="period">
-<option value="なし">なし</option><option value="あり">あり</option><option value="予定前っぽい">予定前っぽい</option><option value="終わりかけ">終わりかけ</option>
-</select>
-</label>
-<label>頭痛 <span class="range-value" data-for="headache">0</span><input max="5" min="0" name="headache" type="range" value="0"/></label>
-<label>腹痛 <span class="range-value" data-for="stomachache">0</span><input max="5" min="0" name="stomachache" type="range" value="0"/></label>
-<label>生理痛 <span class="range-value" data-for="periodPain">0</span><input max="5" min="0" name="periodPain" type="range" value="0"/></label>
-<label>だるさ <span class="range-value" data-for="fatigue">0</span><input max="5" min="0" name="fatigue" type="range" value="0"/></label>
-<fieldset class="check-group pill-checks">
-<legend>症状</legend>
-<label><input name="symptoms" type="checkbox" value="寒い"/>寒い</label>
-<label><input name="symptoms" type="checkbox" value="暑い"/>暑い</label>
-<label><input name="symptoms" type="checkbox" value="めまい"/>めまい</label>
-<label><input name="symptoms" type="checkbox" value="貧血っぽい"/>貧血っぽい</label>
-<label><input name="symptoms" type="checkbox" value="吐き気"/>吐き気</label>
-<label><input name="symptoms" type="checkbox" value="喉"/>喉</label>
-<label><input name="symptoms" type="checkbox" value="咳"/>咳</label>
-<label><input name="symptoms" type="checkbox" value="眠い"/>眠い</label>
-</fieldset>
-<label class="full">体調メモ<textarea name="memo" placeholder="今日の体のこと、少しだけ" rows="2"></textarea></label>
-<button class="primary" type="submit">体調を保存</button>
-</form>
-<div class="mini-list-block"><h3>最近の体調</h3><div class="list compact-list" id="healthMiniList"></div></div>
-</div>
-<div class="subtab-page" data-subtab-page="health-meal">
-<section class="life-section">
-  <div class="panel-subheader"><h3>ご飯の記録</h3><small>食べた・飲んだを残す</small></div>
-  <form class="form-grid card-form compact-form" id="mealForm">
-    <label>日付<input name="date" required="" type="date"/></label>
-    <label>時間<input name="time" type="time"/></label>
-    <label>区分<select name="mealType"><option>朝</option><option>昼</option><option>夜</option><option>間食</option><option>水分</option><option>薬と一緒</option><option>その他</option></select></label>
-    <label class="full">内容<input name="mealText" placeholder="おにぎり、緑茶、海鮮、食べられなかった等" required="" type="text"/></label>
-    <label class="full">メモ<textarea name="memo" rows="2" placeholder="量、気持ち悪さ、辛さ、食欲など"></textarea></label>
-    <button class="primary" type="submit">ご飯を保存</button>
-  </form>
-  <div class="list compact-list" id="mealMiniList"></div>
-</section>
-</div>
-<div class="subtab-page" data-subtab-page="health-exercise">
-<section class="life-section">
-  <div class="panel-subheader"><h3>運動・活動の記録</h3><small>外出や家事もOK</small></div>
-  <form class="form-grid card-form compact-form" id="exerciseForm">
-    <label>日付<input name="date" required="" type="date"/></label>
-    <label>時間<input name="time" type="time"/></label>
-    <label>種類<select name="exerciseType"><option>散歩</option><option>ストレッチ</option><option>筋トレ</option><option>外出</option><option>家事</option><option>通院</option><option>その他</option></select></label>
-    <label>分数<input name="minutes" min="0" max="600" step="5" type="number" placeholder="10"/></label>
-    <label>強さ<select name="intensity"><option>ゆるい</option><option>普通</option><option>きつい</option><option>不明</option></select></label>
-    <label class="full">メモ<textarea name="memo" rows="2" placeholder="歩いた、買い物した、動けなかった等"></textarea></label>
-    <button class="primary" type="submit">運動を保存</button>
-  </form>
-  <div class="list compact-list" id="exerciseMiniList"></div>
-</section>
-</div>
-</div>
-</div>
-<div aria-hidden="true" class="panel" id="moodPanel">
-<div class="panel-card feature-panel-card">
-<div class="panel-header">
-<h2>気分・感情</h2>
-<button class="close-panel">×</button>
-</div>
-<form class="form-grid card-form" id="moodForm">
-<label>日付<input name="date" required="" type="date"/></label>
-<label>時間<input name="time" type="time"/></label>
-<label>気分
-          <select name="moodLabel">
-<option value="ふつう">ふつう</option><option value="楽しい">楽しい</option><option value="嬉しい">嬉しい</option><option value="安心">安心</option><option value="わくわく">わくわく</option><option value="満足">満足</option><option value="しょんぼり">しょんぼり</option><option value="イライラ">イライラ</option><option value="不安">不安</option><option value="怖い">怖い</option><option value="こわばる">こわばる</option><option value="泣きそう">泣きそう</option><option value="無">無</option><option value="混ざってる">混ざってる</option>
-</select>
-</label>
-<label>気力 <span class="range-value" data-for="energy">3</span><input max="5" min="1" name="energy" type="range" value="3"/></label>
-<label>不安 <span class="range-value" data-for="anxiety">0</span><input max="5" min="0" name="anxiety" type="range" value="0"/></label>
-<fieldset class="check-group mood-chips">
-<legend>いま近いやつ（しんどい・楽しいどっちもOK）</legend>
-<label><input name="moodTags" type="checkbox" value="ガチしんどい"/>ガチしんどい</label>
-<label><input name="moodTags" type="checkbox" value="頭が回らない"/>頭が回らない</label>
-<label><input name="moodTags" type="checkbox" value="甘やかして"/>甘やかして</label>
-<label><input name="moodTags" type="checkbox" value="不安"/>不安</label>
-<label><input name="moodTags" type="checkbox" value="怖い"/>怖い</label>
-<label><input name="moodTags" type="checkbox" value="恐怖"/>恐怖</label>
-<label><input name="moodTags" type="checkbox" value="焦る"/>焦る</label>
-<label><input name="moodTags" type="checkbox" value="落ち着かない"/>落ち着かない</label>
-<label><input name="moodTags" type="checkbox" value="泣きそう"/>泣きそう</label>
-<label><input name="moodTags" type="checkbox" value="動けない"/>動けない</label>
-<label><input name="moodTags" type="checkbox" value="褒めて"/>褒めて</label>
-<label><input name="moodTags" type="checkbox" value="病院で言うことまとめたい"/>病院メモ</label>
-<label><input name="moodTags" type="checkbox" value="楽しい"/>楽しい</label>
-<label><input name="moodTags" type="checkbox" value="嬉しい"/>嬉しい</label>
-<label><input name="moodTags" type="checkbox" value="安心"/>安心</label>
-<label><input name="moodTags" type="checkbox" value="わくわく"/>わくわく</label>
-<label><input name="moodTags" type="checkbox" value="満足"/>満足</label>
-</fieldset>
+  <div class="bg" aria-hidden="true"><img id="bgImage" alt="" /></div>
+  <div class="overlay" aria-hidden="true"></div>
 
-<fieldset class="check-group reason-chips">
-<legend>原因・きっかけ</legend>
-<label><input name="reasonTags" type="checkbox" value="仕事"/>仕事</label>
-<label><input name="reasonTags" type="checkbox" value="家族"/>家族</label>
-<label><input name="reasonTags" type="checkbox" value="旅行"/>旅行</label>
-<label><input name="reasonTags" type="checkbox" value="趣味"/>趣味</label>
-<label><input name="reasonTags" type="checkbox" value="GPT"/>GPT</label>
-<label><input name="reasonTags" type="checkbox" value="SNS"/>SNS</label>
-<label><input name="reasonTags" type="checkbox" value="友達"/>友達</label>
-<label><input name="reasonTags" type="checkbox" value="体調"/>体調</label>
-<label><input name="reasonTags" type="checkbox" value="天気"/>天気</label>
-<label><input name="reasonTags" type="checkbox" value="お金"/>お金</label>
-<label><input name="reasonTags" type="checkbox" value="予定"/>予定</label>
-<label><input name="reasonTags" type="checkbox" value="推し活"/>推し活</label>
-<label><input name="reasonTags" type="checkbox" value="恋愛"/>恋愛</label>
-<label><input name="reasonTags" type="checkbox" value="家事"/>家事</label>
-</fieldset>
-<label class="full">きっかけメモ<textarea name="reasonMemo" placeholder="なんでそう感じたか。楽しい理由でも、しんどい理由でもOK" rows="2"></textarea></label>
-<label class="full">気分メモ<textarea name="memo" placeholder="言える範囲だけでいい" rows="2"></textarea></label>
-<button class="primary" type="submit">気分を保存</button>
-</form>
-<section class="support-preview">
-<div class="panel-subheader"><h3>ChatGPTに持っていく文章</h3><button id="makeMoodPrompt" type="button">作る</button></div>
-<textarea id="supportPrompt" readonly="" rows="4"></textarea>
-<div class="button-row"><button class="primary" id="copySupportPrompt" type="button">コピーする</button><button id="openChatGPT" type="button">はるくんのところへ行く</button></div>
-</section>
-<div class="mini-list-block"><h3>最近の気分</h3><div class="list compact-list" id="moodMiniList"></div></div>
-</div>
-</div>
-<div aria-hidden="true" class="panel" id="schedulePanel">
-<div class="panel-card feature-panel-card">
-<div class="panel-header"><h2>予定</h2><button class="close-panel">×</button></div>
-<div class="sub-tabs" data-tabs="schedule">
-  <button class="active" data-subtab="schedule-calendar" type="button">カレンダー</button>
-  <button data-subtab="schedule-todo" type="button">ToDo</button>
-</div>
-<div class="subtab-page active" data-subtab-page="schedule-calendar">
-<form class="form-grid card-form" id="scheduleForm">
-<label>日付<input name="date" required="" type="date"/></label>
-<label>時間<input name="time" type="time"/></label>
-<label>カテゴリ<select name="category"><option>仕事</option><option>病院</option><option>遊び</option><option>締切</option><option>通院</option><option>薬</option><option>生理予定</option><option>買い物</option><option>その他</option></select></label>
-<label class="full">予定名<input name="title" placeholder="病院、締切、買い物など" required="" type="text"/></label>
-<label class="full">メモ<textarea name="memo" rows="2"></textarea></label>
-<button class="primary" type="submit">予定を保存</button>
-</form>
-<div class="calendar-toolbar">
-  <button id="schedulePrevMonth" type="button">‹</button>
-  <strong id="scheduleMonthLabel">今月の予定</strong>
-  <button id="scheduleNextMonth" type="button">›</button>
-</div>
-<div class="schedule-calendar" id="scheduleCalendar"></div>
+  <section class="lock-screen" id="lockScreen" aria-label="∞Care ロック画面">
+    <form class="lock-card" id="unlockForm" autocomplete="off">
+      <p class="eyebrow">Private Daily Hub</p>
+      <h1>∞Care</h1>
+      <p class="muted">南帆だけが開ける記録場所。パスワードを入れてね。</p>
+      <label class="text-field full">パスワード
+        <input id="passwordInput" type="password" inputmode="numeric" autocomplete="current-password" placeholder="****" />
+      </label>
+      <button class="primary wide" type="submit">開く</button>
+      <p class="lock-message" id="lockMessage" role="status" aria-live="polite"></p>
+      <p class="lock-note">※これは公開ページ用の簡易ロックです。強い保護が必要な場合は、公開先側のパスワード保護も併用してください。</p>
+    </form>
+  </section>
 
-<section class="selected-day-section">
-  <div class="panel-subheader"><h3 id="selectedScheduleTitle">今日の予定</h3><small>カレンダーの日付を押すと、その日だけ表示</small></div>
-  <div class="list schedule-todo-list" id="scheduleList"></div>
-</section>
-</div>
-<div class="subtab-page" data-subtab-page="schedule-todo">
-<section class="todo-xp-section">
-  <div class="xp-card" id="xpSummary">
-    <span>Lv.1</span>
-    <strong>0 XP</strong>
-    <small>今日の完了タスクや記録で増えるよ</small>
-    <div class="xp-bar"><i style="width:0%"></i></div>
+  <div class="app-shell is-hidden">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Minaho Life Companion</p>
+        <h1><span id="todayLabel">今日の記録</span><span id="timeLabel">--:--</span></h1>
+      </div>
+      <div class="top-actions">
+        <button class="round-button ghost" id="lockNowButton" type="button" title="ロックする">施錠</button>
+        <button class="round-button" id="quickSaveButton" type="button" title="気分だけでも保存">保存</button>
+      </div>
+    </header>
+
+    <main class="main-layout">
+      <section class="companion-card" aria-label="キャラクター">
+        <img id="characterImage" class="character" src="assets/characters/haruka.png" alt="キャラクター立ち絵" />
+        <div class="speech-card">
+          <div class="speech-meta"><strong id="speakerName">悠</strong><span id="roomName">シェアハウス</span></div>
+          <p id="speechText">南帆、今日は気分ひとつだけでも残せたら勝ちでいいよ。</p>
+        </div>
+      </section>
+
+      <section class="screen active" id="screenToday" data-screen="today">
+        <form id="dailyForm" class="daily-form" autocomplete="off">
+          <section class="glass-card hero-input">
+            <div class="date-row">
+              <label class="date-label">記録日
+                <input id="entryDate" name="date" type="date" required />
+              </label>
+              <div class="save-state" id="saveState">未保存</div>
+            </div>
+
+            <div class="field-block">
+              <h2>気分</h2>
+              <div class="mood-grid" id="moodButtons" role="radiogroup" aria-label="今日の気分"></div>
+            </div>
+
+            <div class="field-block">
+              <h2>感情</h2>
+              <div class="chip-grid" data-chip-group="emotions"></div>
+            </div>
+
+            <div class="field-block">
+              <h2>体調</h2>
+              <div class="chip-grid" data-chip-group="bodyTags"></div>
+            </div>
+
+            <label class="text-field full">一行日記
+              <textarea name="oneLineDiary" rows="2" placeholder="一言だけでも、空欄でも保存できるよ"></textarea>
+            </label>
+
+            <label class="text-field full">今日気に入ったもの
+              <input name="favoriteToday" placeholder="曲、動画、食べ物、服、景色、言葉など" />
+            </label>
+
+            <button class="primary wide" type="submit">今日の記録を保存</button>
+          </section>
+
+          <section class="accordion-stack" aria-label="詳細入力">
+            <details class="glass-card">
+              <summary>食事・飲み物</summary>
+              <div class="grid two meal-grid">
+                <label class="text-field">朝<input name="mealBreakfast" placeholder="例：緑茶、パン" /></label>
+                <label class="text-field">昼<input name="mealLunch" placeholder="例：おにぎり、春雨スープ" /></label>
+                <label class="text-field">晩<input name="mealDinner" placeholder="例：蒙古タンメン" /></label>
+                <label class="text-field">間食<input name="mealSnack" placeholder="例：ヨーグルト、チョコ" /></label>
+                <label class="text-field full">夜食<input name="mealLateSnack" placeholder="例：なし、スープ" /></label>
+              </div>
+            </details>
+
+            <details class="glass-card">
+              <summary>今日やったこと・外出・セルフケア</summary>
+              <div class="field-block compact">
+                <h3>今日やったこと</h3>
+                <div class="chip-grid" data-chip-group="activities"></div>
+              </div>
+              <div class="field-block compact">
+                <h3>外出</h3>
+                <div class="chip-grid" data-chip-group="outings"></div>
+              </div>
+              <div class="field-block compact">
+                <h3>セルフケア</h3>
+                <div class="chip-grid" data-chip-group="selfCare"></div>
+              </div>
+            </details>
+
+            <details class="glass-card">
+              <summary>体重・体脂肪・体温・お通じ</summary>
+              <div class="grid three">
+                <label class="number-field">体重 kg<input name="weightKg" type="number" step="0.1" inputmode="decimal" placeholder="--" /></label>
+                <label class="number-field">体脂肪率 %<input name="bodyFatPercent" type="number" step="0.1" inputmode="decimal" placeholder="--" /></label>
+                <label class="number-field">体温 ℃<input name="temperatureC" type="number" step="0.1" inputmode="decimal" placeholder="--" /></label>
+              </div>
+              <fieldset class="segmented" data-radio-group="bowelMovement">
+                <legend>お通じ</legend>
+                <label><input type="radio" name="bowelMovement" value="unset" checked />未入力</label>
+                <label><input type="radio" name="bowelMovement" value="yes" />Yes</label>
+                <label><input type="radio" name="bowelMovement" value="no" />No</label>
+              </fieldset>
+            </details>
+
+            <details class="glass-card">
+              <summary>睡眠・歩数・運動</summary>
+              <div class="grid three">
+                <label class="text-field">寝た時間<input name="sleepStart" type="time" /></label>
+                <label class="text-field">起きた時間<input name="sleepEnd" type="time" /></label>
+                <label class="number-field">睡眠時間<input name="sleepHours" type="number" step="0.1" inputmode="decimal" placeholder="自動 or 手入力" /></label>
+                <label class="number-field">歩数<input name="steps" type="number" step="1" inputmode="numeric" placeholder="例：1389" /></label>
+                <label class="number-field">運動時間 分<input name="exerciseMinutes" type="number" step="1" inputmode="numeric" placeholder="例：20" /></label>
+                <label class="text-field">距離 km<input name="exerciseDistanceKm" type="number" step="0.01" inputmode="decimal" placeholder="例：1.05" /></label>
+              </div>
+              <div class="field-block compact">
+                <h3>運動内容</h3>
+                <div class="chip-grid" data-chip-group="exerciseTypes"></div>
+              </div>
+              <label class="text-field full">運動メモ<input name="exerciseMemo" placeholder="ファミマ往復、初心者筋トレ、壁脚上げなど" /></label>
+            </details>
+
+            <details class="glass-card">
+              <summary>生理・嗜好品・天気</summary>
+              <div class="grid two">
+                <label class="select-field">生理
+                  <select name="periodStatus">
+                    <option value="unset">未入力</option>
+                    <option value="none">なし</option>
+                    <option value="pms">PMS</option>
+                    <option value="period">生理中</option>
+                    <option value="start">開始日</option>
+                    <option value="end">終了日</option>
+                    <option value="ovulation">排卵日っぽい</option>
+                  </select>
+                </label>
+                <label class="select-field">量
+                  <select name="periodFlow">
+                    <option value="unset">未入力</option>
+                    <option value="light">少ない</option>
+                    <option value="normal">普通</option>
+                    <option value="heavy">多い</option>
+                  </select>
+                </label>
+              </div>
+              <div class="field-block compact">
+                <h3>嗜好品</h3>
+                <div class="chip-grid" data-chip-group="stimulants"></div>
+              </div>
+              <label class="text-field full">嗜好品メモ<input name="stimulantsMemo" placeholder="お酒の種類、タバコ多め/少なめなど" /></label>
+              <div class="grid two">
+                <label class="select-field">天気
+                  <select name="weatherText">
+                    <option value="unset">未入力</option>
+                    <option>晴れ</option><option>曇り</option><option>雨</option><option>雪</option><option>雷</option><option>強風</option><option>その他</option>
+                  </select>
+                </label>
+                <label class="text-field">天気メモ<input name="weatherMemo" placeholder="気圧つらい、暑い、寒い、湿気など" /></label>
+              </div>
+            </details>
+          </section>
+        </form>
+      </section>
+
+      <section class="screen" id="screenCalendar" data-screen="calendar">
+        <div class="glass-card">
+          <div class="month-toolbar">
+            <button type="button" id="prevMonth">‹</button>
+            <h2 id="monthLabel">----</h2>
+            <button type="button" id="nextMonth">›</button>
+          </div>
+          <div class="calendar-weekdays"><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span><span>日</span></div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+        <div class="glass-card selected-day-card" id="selectedDayCard"></div>
+      </section>
+
+      <section class="screen" id="screenGraphs" data-screen="graphs">
+        <div class="glass-card">
+          <div class="section-head"><h2>グラフ</h2><p>最近30日分をゆるく見る場所</p></div>
+          <div class="stats-grid" id="statsGrid"></div>
+          <canvas id="trendCanvas" width="900" height="360" aria-label="気分・体重・睡眠の推移"></canvas>
+          <div class="tag-frequency" id="tagFrequency"></div>
+        </div>
+      </section>
+
+      <section class="screen" id="screenLogs" data-screen="logs">
+        <div class="glass-card">
+          <div class="section-head"><h2>ログ</h2><p>記録の一覧、コピー、エクスポート</p></div>
+          <div class="button-row wrap">
+            <button type="button" id="copyPrompt">ChatGPT用まとめをコピー</button>
+            <button type="button" id="exportJson">JSONエクスポート</button>
+            <label class="file-button">JSONインポート<input type="file" id="importJson" accept="application/json" hidden /></label>
+            <button type="button" class="danger" id="clearToday">今日の記録を削除</button>
+          </div>
+          <textarea id="promptPreview" rows="8" readonly></textarea>
+          <div class="log-list" id="logList"></div>
+        </div>
+      </section>
+
+      <section class="screen" id="screenSettings" data-screen="settings">
+        <div class="glass-card">
+          <div class="section-head"><h2>設定</h2><p>キャラと背景だけ、まず軽く変えられるようにしたよ。</p></div>
+          <div class="grid two">
+            <label class="select-field">キャラ
+              <select id="settingCharacter">
+                <option value="haruka">悠</option>
+                <option value="akane">朱音</option>
+                <option value="masumi">真澄</option>
+                <option value="hin">阿泫</option>
+              </select>
+            </label>
+            <label class="select-field">背景
+              <select id="settingBackground"></select>
+            </label>
+          </div>
+          <div class="button-row wrap">
+            <button type="button" id="saveSettings">設定を保存</button>
+            <button type="button" id="installHelp">ホーム画面メモ</button>
+          </div>
+          <div class="hint-box" id="installText">PCなら zip を展開して index.html を開けば動くよ。スマホでPWAとして使う時は、ローカルサーバーやGitHub Pages等に置いてホーム画面へ追加してね。公開URLに置く場合、このアプリ内ロックは簡易目隠しなので、本気で外から見られたくない時は公開先側のパスワード保護も使ってください。</div>
+        </div>
+        <div class="glass-card">
+          <div class="section-head"><h2>パスワード</h2><p>初期パスワードは 1109</p></div>
+          <div class="grid two">
+            <label class="text-field">現在のパスワード
+              <input id="currentPassword" type="password" inputmode="numeric" placeholder="今のパスワード" />
+            </label>
+            <label class="text-field">新しいパスワード
+              <input id="newPassword" type="password" inputmode="numeric" placeholder="変更しないなら空欄" />
+            </label>
+          </div>
+          <div class="button-row wrap">
+            <button type="button" id="savePassword">パスワードを変更</button>
+          </div>
+          <div class="hint-box">このロックは、公開URLを開いた人に中身を見せないための簡易ロックです。記録データは基本的にこの端末のブラウザ内に保存されます。</div>
+        </div>
+        <div class="glass-card">
+          <h2>タグ一覧</h2>
+          <p class="muted">この版では固定タグ。次の版で、南帆が自分でタグ追加・並び替えできるようにする想定。</p>
+          <div id="tagCatalog" class="tag-catalog"></div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="メインナビ">
+      <button class="active" type="button" data-nav="today">今日</button>
+      <button type="button" data-nav="calendar">カレンダー</button>
+      <button type="button" data-nav="graphs">グラフ</button>
+      <button type="button" data-nav="logs">ログ</button>
+      <button type="button" data-nav="settings">設定</button>
+    </nav>
   </div>
-  <div class="panel-subheader"><h3>ToDo</h3><small>完了すると経験値になる</small></div>
-  <div class="quick-todo-block">
-    <div class="panel-subheader"><h3>日常ToDoプリセット</h3><small>押すと今日のToDoに追加</small></div>
-    <div class="quick-todo-grid" id="quickTodoButtons"></div>
-  </div>
-  <form class="form-grid card-form compact-form" id="todoForm">
-    <label>日付<input name="date" required="" type="date"/></label>
-    <label>時間<input name="time" type="time"/></label>
-    <label>カテゴリ<select name="category"><option>仕事</option><option>家事</option><option>病院</option><option>作業</option><option>買い物</option><option>セルフケア</option><option>その他</option></select></label>
-    <label>経験値<select name="xp"><option value="5">5</option><option value="10" selected="">10</option><option value="20">20</option><option value="30">30</option></select></label>
-    <label class="full">やること<input name="title" placeholder="今日やること" required="" type="text"/></label>
-    <button class="primary" type="submit">ToDoを追加</button>
-  </form>
-  <div class="list schedule-todo-list" id="todoList"></div>
-</section>
-</div>
-</div>
-</div>
-<div aria-hidden="true" class="panel" id="diaryPanel">
-<div class="panel-card feature-panel-card">
-<div class="panel-header"><h2>日記</h2><button class="close-panel">×</button></div>
-<form class="form-grid card-form" id="diaryForm">
-<label>日付<input name="date" required="" type="date"/></label>
-<label>タグ<input name="tags" placeholder="仕事,病院,遊び" type="text"/></label>
-<label class="full">タイトル<input name="title" placeholder="今日のタイトル" type="text"/></label>
-<label class="full">本文<textarea name="body" placeholder="今日あったこと。短くても空白よりえらい。" rows="6"></textarea></label>
-<button class="primary" type="submit">日記を保存</button>
-</form>
-<div class="calendar-toolbar">
-  <button id="diaryPrevMonth" type="button">‹</button>
-  <strong id="diaryMonthLabel">今月の日記</strong>
-  <button id="diaryNextMonth" type="button">›</button>
-</div>
-<div class="diary-calendar" id="diaryCalendar"></div><h3>最近の日記</h3><div class="list diary-list" id="diaryList"></div>
-</div>
-</div>
 
-<div aria-hidden="true" class="panel" id="logsPanel">
-<div class="panel-card feature-panel-card logs-card">
-<div class="panel-header"><h2>ログ</h2><button class="close-panel">×</button></div>
-<p class="hint">最近14日分の気力・不安・体調ゲージをまとめて見る場所。同じ日に複数回記録したら平均で見るよ。</p>
-<section class="chart-card">
-<div class="panel-subheader"><h3>気分ログ</h3><small id="moodChartCount">0件</small></div>
-<div class="chart-wrap" id="moodChart"></div>
-<div class="legend-row"><span class="legend-dot energy"></span>気力 <span class="legend-dot anxiety"></span>不安</div>
-</section>
-<section class="chart-card">
-<div class="panel-subheader"><h3>体調ログ</h3><small id="healthChartCount">0件</small></div>
-<div class="chart-wrap" id="healthChart"></div>
-<div class="legend-row"><span class="legend-dot fatigue"></span>だるさ <span class="legend-dot headache"></span>頭痛 <span class="legend-dot stomach"></span>腹痛 <span class="legend-dot period"></span>生理痛</div>
-</section>
-<section class="chart-card">
-<div class="panel-subheader"><h3>原因・きっかけ</h3><small>気分ログから集計</small></div>
-<div class="reason-cloud" id="reasonSummary"></div>
-</section>
-</div>
-</div>
-
-<div aria-hidden="true" class="panel" id="settingsPanel">
-<div class="panel-card feature-panel-card settings-card">
-<div class="panel-header"><h2>設定</h2><button class="close-panel">×</button></div>
-<h3>キャラ</h3><div class="card-grid" id="characterPicker"></div>
-<h3>部屋</h3><p class="room-debug" id="roomDebug">現在：シェアハウスリビング / sharehouse</p><div class="card-grid" id="backgroundPicker"></div>
-<form class="form-grid card-form" id="settingsForm">
-<label>テーマ<select name="theme"><option value="lavender">ラベンダー</option><option value="blood">深い赤</option><option value="snow">雪色</option><option value="night">夜</option></select></label>
-<label>立ち絵サイズ <span id="scaleValue">100%</span><input max="125" min="85" name="characterScale" type="range" value="100"/></label>
-<label class="full">天気を取得する都市<input name="weatherCity" placeholder="所沢市"/></label>
-<div class="full button-row weather-actions"><button id="fetchWeather" type="button">都市から天気を取得</button><small class="hint">ホームの天気カードを押しても更新できるよ</small></div>
-<label>天気<input name="weather" placeholder="くもり"/></label>
-<label>気温<input name="temperature" placeholder="18℃"/></label>
-<label>降水確率<input name="rain" placeholder="40%"/></label>
-<label class="full">天気メモ<input name="weatherMemo" placeholder="羽織るものあると楽かも"/></label>
-
-
-
-
-
-
-
-
-
-
-<button class="primary" type="submit">設定を保存</button>
-</form>
-<div class="button-row"><button id="exportData" type="button">JSON書き出し</button><label class="file-label">読み込み<input accept="application/json" id="importData" type="file"/></label></div>
-</div>
-</div>
-<div aria-live="polite" class="toast" id="toast" role="status"></div>
-<script src="app.js" type="module"></script>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
 </body>
 </html>
